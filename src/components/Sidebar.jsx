@@ -1,5 +1,4 @@
-import React from 'react';
-import { Heart, Users, Activity, CheckCircle, ShieldAlert, Radio, Settings as SettingsIcon } from 'lucide-react';
+import { Heart, Users, Activity, CheckCircle, ShieldAlert, Radio, Settings as SettingsIcon, Calendar, Receipt, Gift, X } from 'lucide-react';
 
 /**
  * Sidebar navigation component.
@@ -8,17 +7,45 @@ import { Heart, Users, Activity, CheckCircle, ShieldAlert, Radio, Settings as Se
  * - setActiveTab: function to switch tabs
  * - pendingVerificationsCount: number of users pending verification
  * - pendingReportsCount: number of pending abuse reports
+ * - activeStreamsCount: number of active live streams
+ * - bookingsCount: number of total date bookings
+ * - mobileMenuOpen: boolean
+ * - setMobileMenuOpen: function to close/open menu
  */
-export default function Sidebar({ activeTab, setActiveTab, pendingVerificationsCount, pendingReportsCount }) {
+export default function Sidebar({
+  activeTab,
+  setActiveTab,
+  pendingVerificationsCount,
+  pendingReportsCount,
+  activeStreamsCount = 0,
+  bookingsCount = 0,
+  mobileMenuOpen,
+  setMobileMenuOpen
+}) {
   return (
-    <aside className="sidebar">
-      <div className="logo-container">
-        <div className="logo-icon">
-          <Heart size={22} fill="white" />
+    <>
+      {/* Mobile Backdrop overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="logo-container">
+          <div className="logo-icon">
+            <Heart size={22} fill="white" />
+          </div>
+          <span className="logo-text">DateDash</span>
+          <span className="logo-tag">ADMIN</span>
+          <button 
+            className="mobile-menu-close"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close navigation menu"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <span className="logo-text">DateDash</span>
-        <span className="logo-tag">ADMIN</span>
-      </div>
 
       <ul className="nav-links">
         <li>
@@ -65,11 +92,44 @@ export default function Sidebar({ activeTab, setActiveTab, pendingVerificationsC
         </li>
         <li>
           <button
-            onClick={() => setActiveTab('operations')}
-            className={`nav-link ${activeTab === 'operations' ? 'active' : ''}`}
+            onClick={() => setActiveTab('streams')}
+            className={`nav-link ${activeTab === 'streams' ? 'active' : ''}`}
           >
             <Radio size={18} />
-            Operations Hub
+            Live Streams
+            {activeStreamsCount > 0 && (
+              <span className="nav-link-badge secondary-badge">{activeStreamsCount}</span>
+            )}
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`nav-link ${activeTab === 'bookings' ? 'active' : ''}`}
+          >
+            <Calendar size={18} />
+            Date Bookings
+            {bookingsCount > 0 && (
+              <span className="nav-link-badge secondary-badge" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>{bookingsCount}</span>
+            )}
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
+          >
+            <Receipt size={18} />
+            Transactions
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => setActiveTab('gifts')}
+            className={`nav-link ${activeTab === 'gifts' ? 'active' : ''}`}
+          >
+            <Gift size={18} />
+            Virtual Gifts
           </button>
         </li>
         <li>
@@ -97,5 +157,6 @@ export default function Sidebar({ activeTab, setActiveTab, pendingVerificationsC
         </div>
       </div>
     </aside>
+    </>
   );
 }

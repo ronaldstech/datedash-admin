@@ -6,7 +6,10 @@ import OverviewTab from './components/OverviewTab';
 import UsersTab from './components/UsersTab';
 import VerificationsTab from './components/VerificationsTab';
 import ReportsTab from './components/ReportsTab';
-import OperationsTab from './components/OperationsTab';
+import StreamsTab from './components/StreamsTab';
+import BookingsTab from './components/BookingsTab';
+import TransactionsTab from './components/TransactionsTab';
+import GiftsTab from './components/GiftsTab';
 import SettingsTab from './components/SettingsTab';
 import UserDetailsModal from './components/UserDetailsModal';
 import {
@@ -58,7 +61,6 @@ const initialGifts = [
 function App() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('overview');
-  const [opsSubTab, setOpsSubTab] = useState('streams'); // streams, bookings, transactions, gifts
 
   // Connection Indicator
   const [isLive, setIsLive] = useState(false);
@@ -620,14 +622,35 @@ function App() {
     }
   ];
 
+  // Mobile Sidebar State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="app-container">
+    <div className={`app-container ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       {/* Sidebar Navigation */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} pendingVerificationsCount={pendingVerificationsCount} pendingReportsCount={pendingReportsCount} />
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setMobileMenuOpen(false);
+        }}
+        pendingVerificationsCount={pendingVerificationsCount}
+        pendingReportsCount={pendingReportsCount}
+        activeStreamsCount={activeStreams.length}
+        bookingsCount={bookings.length}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Header activeTab={activeTab} isLive={isLive} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <Header 
+          activeTab={activeTab} 
+          isLive={isLive} 
+          searchQuery={searchQuery} 
+          setSearchQuery={setSearchQuery} 
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
 
         <section className="content-body">
           {loading ? (
@@ -673,22 +696,29 @@ function App() {
                 <ReportsTab reports={reports} handleReportAction={handleReportAction} />
               )}
 
-              {/* TAB 5: OPERATIONS HUB */}
-              {activeTab === 'operations' && (
-                <OperationsTab
-                  opsSubTab={opsSubTab}
-                  setOpsSubTab={setOpsSubTab}
-                  activeStreams={activeStreams}
-                  bookings={bookings}
-                  transactions={transactions}
-                  gifts={gifts}
+              {/* TAB 5: LIVE STREAMS */}
+              {activeTab === 'streams' && (
+                <StreamsTab activeStreams={activeStreams} handleTerminateStream={handleTerminateStream} />
+              )}
+
+              {/* TAB 6: DATE BOOKINGS */}
+              {activeTab === 'bookings' && (
+                <BookingsTab
                   bookingStatusFilter={bookingStatusFilter}
                   setBookingStatusFilter={setBookingStatusFilter}
                   filteredBookings={filteredBookings}
-                  handleTerminateStream={handleTerminateStream}
                   handleUpdateBookingStatus={handleUpdateBookingStatus}
-                  handleUpdateGiftCost={handleUpdateGiftCost}
                 />
+              )}
+
+              {/* TAB 7: TRANSACTIONS */}
+              {activeTab === 'transactions' && (
+                <TransactionsTab transactions={transactions} />
+              )}
+
+              {/* TAB 8: VIRTUAL GIFTS */}
+              {activeTab === 'gifts' && (
+                <GiftsTab gifts={gifts} handleUpdateGiftCost={handleUpdateGiftCost} />
               )}
 
               {/* TAB 6: APP CONFIG / SETTINGS */}

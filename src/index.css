@@ -944,3 +944,204 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN & MOBILE LAYOUTS
+   ========================================================================== */
+
+/* Mobile hamburger toggle styling */
+.mobile-menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  border: 1px solid var(--border-color);
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Mobile close toggle styling inside sidebar */
+.mobile-menu-close {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border: 1px solid var(--border-color);
+}
+
+.mobile-menu-close:hover {
+  color: white;
+  background: var(--bg-tertiary);
+}
+
+/* Tablet & Mobile Media Queries */
+@media (max-width: 991px) {
+  .app-container {
+    grid-template-columns: 1fr; /* Stack sidebar and main content */
+  }
+
+  /* Transform Sidebar into an off-canvas drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hide offscreen */
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar.mobile-open {
+    left: 0; /* Slide in */
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+  }
+
+  .mobile-menu-close {
+    display: flex;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .header {
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .content-body {
+    padding: 20px;
+  }
+
+  /* Make tables scrollable horizontally to prevent breaking layout */
+  .table-card {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .custom-table {
+    min-width: 800px; /* Keep tabular alignment clean, force scrollbar instead of squishing */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Dynamic Title & Descriptions alignment */
+  .header {
+    height: auto;
+    padding: 16px 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .page-title {
+    flex-grow: 1;
+    margin-left: 8px;
+  }
+
+  .page-title h1 {
+    font-size: 20px;
+  }
+
+  .page-title p {
+    display: none; /* Hide helper text on mobile to save space */
+  }
+
+  /* Stack header actions (e.g. search bars) below or make compact */
+  .header-actions {
+    width: auto;
+  }
+
+  .search-bar input {
+    width: 160px; /* Make search box more compact */
+    font-size: 13px;
+    padding: 6px 12px 6px 32px;
+  }
+
+  .search-icon {
+    top: 8px;
+  }
+
+  /* KPI grids configuration */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stat-card {
+    padding: 16px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  /* Verification queues */
+  .queue-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .queue-comparison {
+    grid-template-columns: 1fr; /* Stack selfie vs avatar */
+  }
+
+  /* Settings structure */
+  .settings-section {
+    padding: 20px;
+  }
+
+  .settings-section-header {
+    margin-bottom: 16px;
+  }
+
+  /* Form layouts */
+  .form-group div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important; /* Force stack price/limits columns */
+  }
+  
+  .settings-container div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Abuse reports template details */
+  .queue-card[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important; /* Stack user details, reason details and buttons */
+    gap: 16px;
+  }
+
+  .queue-card div[style*="borderLeft"] {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+  }
+}
+
