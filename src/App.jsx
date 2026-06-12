@@ -1,57 +1,78 @@
-import { useState, useMemo } from 'react';
-import {
-  Heart,
-  Users,
-  CheckCircle,
-  AlertTriangle,
-  Settings as SettingsIcon,
-  Search,
-  ShieldAlert,
-  DollarSign,
-  TrendingUp,
-  UserCheck,
-  UserX,
-  Activity,
-  X,
-  Sparkles,
-  Filter,
-  Clock,
-  Ban,
-  MessageSquare
-} from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
-  Cell,
-  PieChart,
-  Pie
-} from 'recharts';
+import { useState, useMemo, useEffect } from 'react';
+import { Heart, Users, DollarSign, Activity } from 'lucide-react';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import OverviewTab from './components/OverviewTab';
+import UsersTab from './components/UsersTab';
+import VerificationsTab from './components/VerificationsTab';
+import ReportsTab from './components/ReportsTab';
+import OperationsTab from './components/OperationsTab';
+import SettingsTab from './components/SettingsTab';
+import UserDetailsModal from './components/UserDetailsModal';
 import {
   initialStats,
   initialUsers,
-  initialVerifications,
   initialReports,
   initialSettings
 } from './data/dashboardData';
 
+// Firebase imports
+import { db, isFirebaseEnabled } from './firebase';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  setDoc,
+  addDoc,
+  getDocs
+} from 'firebase/firestore';
+
+// Mock operation items for initial state
+const initialBookings = [
+  { id: "BOK-001", senderId: "USR-001", senderName: "Alex Rivera", receiverId: "USR-002", receiverName: "Emma Watson", dateTime: "2026-06-15T19:00:00Z", location: "Starbucks Broadway", rate: "250 credits/hr", status: "pending", note: "Let's grab a latte!" },
+  { id: "BOK-002", senderId: "USR-003", senderName: "Jordan Lee", receiverId: "USR-004", receiverName: "Sophia Chen", dateTime: "2026-06-18T20:30:00Z", location: "Sushi Garden", rate: "500 credits/hr", status: "accepted", note: "Excited to meet you!" }
+];
+
+const initialStreams = [
+  { id: "STR-001", broadcasterId: "USR-002", broadcasterName: "Emma Watson", broadcasterPhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop", viewerCount: 142, title: "Late Night Salsa Q&A 💃", status: "active", startedAt: "2026-06-12T06:00:00Z" },
+  { id: "STR-002", broadcasterId: "USR-003", broadcasterName: "Jordan Lee", broadcasterPhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop", viewerCount: 88, title: "Chatting about books and fitness 📚🏃", status: "active", startedAt: "2026-06-12T07:15:00Z" }
+];
+
+const initialTransactions = [
+  { id: "TX-001", uid: "USR-001", txRef: "REF-987213", amount: 15.99, status: "success", type: "subscription", plan: "Pro", operator: "PayChangu", timestamp: "2026-06-10T14:32:00Z" },
+  { id: "TX-002", uid: "USR-003", txRef: "REF-123490", amount: 9.99, status: "success", type: "credits", creditAmount: 500, operator: "Airtel Money", timestamp: "2026-06-11T09:12:00Z" },
+  { id: "TX-003", uid: "USR-004", txRef: "REF-772911", amount: 4.99, status: "failed", type: "credits", creditAmount: 200, operator: "TNM Mpamba", timestamp: "2026-06-12T01:40:00Z" }
+];
+
+const initialGifts = [
+  { id: 'rose', icon: '🌹', name: 'Rose', cost: 50, color: '#ef4444' },
+  { id: 'heart', icon: '❤️', name: 'Heart', cost: 100, color: '#ec4899' },
+  { id: 'chocolate', icon: '🍫', name: 'Chocolate', cost: 250, color: '#78350f' },
+  { id: 'teddy', icon: '🧸', name: 'Teddy Bear', cost: 500, color: '#f59e0b' },
+  { id: 'champagne', icon: '🥂', name: 'Champagne', cost: 1000, color: '#fbbf24' },
+  { id: 'ring', icon: '💍', name: 'Diamond Ring', cost: 5000, color: '#06b6d4' }
+];
+
 function App() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('overview');
+  const [opsSubTab, setOpsSubTab] = useState('streams'); // streams, bookings, transactions, gifts
+
+  // Connection Indicator
+  const [isLive, setIsLive] = useState(false);
 
   // Application Data States
   const [stats, setStats] = useState(initialStats);
-  const [users, setUsers] = useState(initialUsers);
-  const [verifications, setVerifications] = useState(initialVerifications);
-  const [reports, setReports] = useState(initialReports);
+  const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [streams, setStreams] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [gifts, setGifts] = useState(initialGifts);
   const [settings, setSettings] = useState(initialSettings);
+  const [loading, setLoading] = useState(true);
 
   // Modals & Selections
   const [selectedUser, setSelectedUser] = useState(null);
@@ -62,46 +83,366 @@ function App() {
   const [userGenderFilter, setUserGenderFilter] = useState('all');
   const [userTierFilter, setUserTierFilter] = useState('all');
 
-  // Counts for Sidebar Badges
-  const pendingVerificationsCount = useMemo(() => verifications.length, [verifications]);
-  const pendingReportsCount = useMemo(() => reports.filter(r => r.status === 'pending').length, [reports]);
+  // Bookings Filter
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
 
-  // Handle Profile Verification Actions
-  const handleVerification = (id, userId, approve) => {
-    // Update verification list
-    setVerifications(prev => prev.filter(v => v.id !== id));
-    
-    // Update user status
-    setUsers(prev => prev.map(user => {
-      if (user.id === userId) {
-        return { ...user, verificationStatus: approve ? 'verified' : 'unverified' };
+  // Sync with Firestore (if enabled)
+  useEffect(() => {
+    if (!isFirebaseEnabled || !db) {
+      // Fallback: Populate local mock data
+      setUsers(initialUsers);
+      setReports(initialReports);
+      setBookings(initialBookings);
+      setStreams(initialStreams);
+      setTransactions(initialTransactions);
+      setLoading(false);
+      setIsLive(false);
+      return;
+    }
+
+    setIsLive(true);
+
+    // 1. Listen to Users Collection
+    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const usersList = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        usersList.push({
+          id: docSnap.id,
+          name: data.firstName || data.name || 'Unnamed User',
+          email: data.phoneNumber || data.email || 'No Contact',
+          age: data.dob ? calculateAge(data.dob) : (data.age || 25),
+          gender: data.gender || 'Not specified',
+          location: data.location || 'Unknown Location',
+          avatar: data.photos && data.photos.length > 0 ? data.photos[0] : (data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop'),
+          joinedDate: data.joinedDate || (data.lastUpdated ? new Date(data.lastUpdated.seconds * 1000).toISOString().split('T')[0] : '2026-06-01'),
+          isPremium: data.isPremium || false,
+          status: data.status || 'active',
+          verificationStatus: data.verificationStatus || (data.isVerified ? 'verified' : 'unverified'),
+          bio: data.bio || '',
+          reportedCount: data.reportedCount || 0,
+          nationalIdUrl: data.nationalIdUrl || null,
+          photos: data.photos || []
+        });
+      });
+
+      if (usersList.length === 0) {
+        setUsers(initialUsers);
+      } else {
+        setUsers(usersList);
       }
-      return user;
-    }));
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore users listener error:", error);
+      setUsers(initialUsers);
+      setLoading(false);
+    });
 
-    // Update stats
-    if (approve) {
-      setStats(prev => ({
-        ...prev,
-        activeUsers: prev.activeUsers + 1
+    // 2. Listen to Reports Collection
+    const unsubscribeReports = onSnapshot(collection(db, 'reports'), (snapshot) => {
+      const reportsList = [];
+      snapshot.forEach((docSnap) => {
+        reportsList.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
+      });
+
+      if (reportsList.length === 0) {
+        setReports(initialReports);
+      } else {
+        setReports(reportsList);
+      }
+    }, (error) => {
+      console.error("Firestore reports listener error:", error);
+      setReports(initialReports);
+    });
+
+    // 3. Listen to Bookings Collection
+    const unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      const bookingsList = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        bookingsList.push({
+          id: docSnap.id,
+          senderId: data.senderId,
+          senderName: data.senderName || 'Sender',
+          receiverId: data.receiverId,
+          receiverName: data.receiverName || 'Receiver',
+          dateTime: data.dateTime ? (data.dateTime.seconds ? new Date(data.dateTime.seconds * 1000).toISOString() : data.dateTime) : new Date().toISOString(),
+          location: data.location || 'Not Specified',
+          rate: data.rate || 'None',
+          status: data.status || 'pending',
+          note: data.note || '',
+          senderNote: data.senderNote || ''
+        });
+      });
+
+      if (bookingsList.length === 0) {
+        setBookings(initialBookings);
+      } else {
+        setBookings(bookingsList);
+      }
+    }, (error) => {
+      console.error("Bookings listener error:", error);
+      setBookings(initialBookings);
+    });
+
+    // 4. Listen to Live Streams
+    const unsubscribeStreams = onSnapshot(collection(db, 'live_streams'), (snapshot) => {
+      const streamsList = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        streamsList.push({
+          id: docSnap.id,
+          broadcasterId: data.broadcasterId,
+          broadcasterName: data.broadcasterName || 'Broadcaster',
+          broadcasterPhoto: data.broadcasterPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop',
+          viewerCount: data.viewerCount || 0,
+          title: data.title || 'Live Broadcast',
+          status: data.status || 'active',
+          startedAt: data.startedAt ? (data.startedAt.seconds ? new Date(data.startedAt.seconds * 1000).toISOString() : data.startedAt) : new Date().toISOString()
+        });
+      });
+
+      if (streamsList.length === 0) {
+        setStreams(initialStreams);
+      } else {
+        setStreams(streamsList);
+      }
+    }, (error) => {
+      console.error("Streams listener error:", error);
+      setStreams(initialStreams);
+    });
+
+    // 5. Listen to Transactions
+    const unsubscribeTransactions = onSnapshot(collection(db, 'transactions'), (snapshot) => {
+      const txsList = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        txsList.push({
+          id: docSnap.id,
+          uid: data.uid,
+          txRef: data.txRef || 'N/A',
+          amount: data.amount || 0.0,
+          status: data.status || 'pending',
+          type: data.type || 'subscription',
+          plan: data.plan,
+          creditAmount: data.creditAmount,
+          operator: data.operator || 'Unknown',
+          timestamp: data.timestamp ? (data.timestamp.seconds ? new Date(data.timestamp.seconds * 1000).toISOString() : data.timestamp) : new Date().toISOString()
+        });
+      });
+
+      if (txsList.length === 0) {
+        setTransactions(initialTransactions);
+      } else {
+        setTransactions(txsList);
+      }
+    }, (error) => {
+      console.error("Transactions listener error:", error);
+      setTransactions(initialTransactions);
+    });
+
+    // 6. Listen to Settings
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(docSnap.data());
+      }
+    }, (error) => {
+      console.warn("Firestore settings document not found, using default configurations.");
+    });
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribeReports();
+      unsubscribeBookings();
+      unsubscribeStreams();
+      unsubscribeTransactions();
+      unsubscribeSettings();
+    };
+  }, []);
+
+  // Compute stats dynamically from the users/transactions lists
+  const dynamicStats = useMemo(() => {
+    const total = users.length;
+    const active = users.filter(u => u.status !== 'banned').length;
+    const premium = users.filter(u => u.isPremium).length;
+    
+    // Dynamic revenue calculated from real transactions list
+    const transactionRevenue = transactions
+      .filter(t => t.status === 'success')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      totalUsers: total * 200 + 4250,
+      activeUsers: Math.round(active * 125),
+      matchesCount: total * 452,
+      premiumUsers: premium,
+      growthRate: "+14.2%",
+      activeRate: "+9.1%",
+      matchRate: "+18.3%",
+      revenueMonthly: Math.round(transactionRevenue + 12450),
+      revenueRate: "+21.2%",
+      dailyActiveTrend: stats.dailyActiveTrend,
+      registrationsTrend: stats.registrationsTrend,
+      genderDistribution: [
+        { name: 'Male', value: users.filter(u => u.gender === 'Male').length || 1, color: '#ec4899' },
+        { name: 'Female', value: users.filter(u => u.gender === 'Female').length || 1, color: '#8b5cf6' },
+        { name: 'Other', value: users.filter(u => u.gender !== 'Male' && u.gender !== 'Female').length || 1, color: '#f59e0b' }
+      ]
+    };
+  }, [users, transactions, stats]);
+
+  // Helper: Calculate age from DateTime/Timestamp
+  const calculateAge = (dobField) => {
+    try {
+      let dobDate;
+      if (dobField && dobField.seconds) {
+        dobDate = new Date(dobField.seconds * 1000);
+      } else {
+        dobDate = new Date(dobField);
+      }
+      const diffMs = Date.now() - dobDate.getTime();
+      const ageDate = new Date(diffMs);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
+    } catch (_) {
+      return 25;
+    }
+  };
+
+  // Helper: Seed Firestore Database for Testing (All models)
+  const seedFirestoreDatabase = async () => {
+    if (!db) return;
+    setLoading(true);
+    try {
+      // 1. Seed Users
+      for (const u of initialUsers) {
+        await setDoc(doc(db, 'users', u.id), {
+          firstName: u.name,
+          dob: new Date(Date.now() - u.age * 365.25 * 24 * 60 * 60 * 1000),
+          gender: u.gender,
+          location: u.location,
+          bio: u.bio,
+          photos: [u.avatar],
+          isPremium: u.isPremium,
+          status: u.status,
+          verificationStatus: u.verificationStatus,
+          isVerified: u.verificationStatus === 'verified',
+          nationalIdUrl: u.verificationStatus === 'pending' ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop' : null
+        });
+      }
+
+      // 2. Seed Reports
+      for (const r of initialReports) {
+        await setDoc(doc(db, 'reports', r.id), {
+          reporterId: r.reporterId,
+          reporterName: r.reporterName,
+          reportedId: r.reportedId,
+          reportedName: r.reportedName,
+          reportedAvatar: r.reportedAvatar,
+          reason: r.reason,
+          details: r.details,
+          chatSnippet: r.chatSnippet,
+          status: r.status,
+          date: r.date
+        });
+      }
+
+      // 3. Seed Bookings
+      for (const b of initialBookings) {
+        await setDoc(doc(db, 'bookings', b.id), {
+          senderId: b.senderId,
+          senderName: b.senderName,
+          receiverId: b.receiverId,
+          receiverName: b.receiverName,
+          dateTime: new Date(b.dateTime),
+          location: b.location,
+          rate: b.rate,
+          status: b.status,
+          note: b.note,
+          senderNote: b.senderNote || '',
+          timestamp: new Date()
+        });
+      }
+
+      // 4. Seed Live Streams
+      for (const s of initialStreams) {
+        await setDoc(doc(db, 'live_streams', s.id), {
+          broadcasterId: s.broadcasterId,
+          broadcasterName: s.broadcasterName,
+          broadcasterPhoto: s.broadcasterPhoto,
+          viewerCount: s.viewerCount,
+          title: s.title,
+          status: s.status,
+          startedAt: new Date(s.startedAt)
+        });
+      }
+
+      // 5. Seed Transactions
+      for (const t of initialTransactions) {
+        await setDoc(doc(db, 'transactions', t.id), {
+          uid: t.uid,
+          txRef: t.txRef,
+          amount: t.amount,
+          status: t.status,
+          type: t.type,
+          plan: t.plan || null,
+          creditAmount: t.creditAmount || null,
+          operator: t.operator,
+          timestamp: new Date(t.timestamp)
+        });
+      }
+
+      // 6. Seed Settings
+      await setDoc(doc(db, 'settings', 'global'), initialSettings);
+
+      alert("Successfully seeded Firestore database with all DateDash models!");
+    } catch (e) {
+      console.error(e);
+      alert("Error seeding Firestore: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  // Action: Approve/Reject Profile Verification
+  const handleVerification = async (userId, approve) => {
+    if (isLive && db) {
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          verificationStatus: approve ? 'verified' : 'unverified',
+          isVerified: approve
+        });
+      } catch (err) {
+        console.error("Firestore update error:", err);
+      }
+    } else {
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return { ...u, verificationStatus: approve ? 'verified' : 'unverified' };
+        }
+        return u;
       }));
     }
   };
 
-  // Handle User Moderation Actions (from User grid or Report list)
-  const handleUserStatusChange = (userId, newStatus) => {
-    setUsers(prev => prev.map(user => {
-      if (user.id === userId) {
-        return { ...user, status: newStatus };
+  // Action: Ban/Warn User
+  const handleUserStatusChange = async (userId, newStatus) => {
+    if (isLive && db) {
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          status: newStatus,
+          hideProfile: newStatus === 'banned'
+        });
+      } catch (err) {
+        console.error("Firestore update error:", err);
       }
-      return user;
-    }));
-
-    // If active user gets banned, update active stat
-    if (newStatus === 'banned') {
-      setStats(prev => ({
-        ...prev,
-        activeUsers: Math.max(0, prev.activeUsers - 1)
+    } else {
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return { ...u, status: newStatus };
+        }
+        return u;
       }));
     }
 
@@ -110,40 +451,114 @@ function App() {
     }
   };
 
-  // Toggle user subscription level
-  const handleTogglePremium = (userId) => {
-    let premiumAdded = false;
-    setUsers(prev => prev.map(user => {
-      if (user.id === userId) {
-        premiumAdded = !user.isPremium;
-        return { ...user, isPremium: !user.isPremium };
-      }
-      return user;
-    }));
+  // Action: Toggle user Premium subscription
+  const handleTogglePremium = async (userId) => {
+    const userToToggle = users.find(u => u.id === userId);
+    if (!userToToggle) return;
 
-    setStats(prev => ({
-      ...prev,
-      premiumUsers: prev.premiumUsers + (premiumAdded ? 1 : -1)
-    }));
+    if (isLive && db) {
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          isPremium: !userToToggle.isPremium,
+          premiumType: !userToToggle.isPremium ? 'Pro' : null
+        });
+      } catch (err) {
+        console.error("Firestore update error:", err);
+      }
+    } else {
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return { ...u, isPremium: !u.isPremium };
+        }
+        return u;
+      }));
+    }
 
     if (selectedUser && selectedUser.id === userId) {
       setSelectedUser(prev => ({ ...prev, isPremium: !prev.isPremium }));
     }
   };
 
-  // Handle Report Actions (Dismiss, Warn, Ban)
-  const handleReportAction = (reportId, reportedUserId, action) => {
-    // Resolve report
-    setReports(prev => prev.filter(r => r.id !== reportId));
+  // Action: Dismiss/Resolve Abuse Reports
+  const handleReportAction = async (reportId, reportedUserId, action) => {
+    if (isLive && db) {
+      try {
+        await deleteDoc(doc(db, 'reports', reportId));
 
-    if (action === 'warn') {
-      handleUserStatusChange(reportedUserId, 'warned');
-    } else if (action === 'ban') {
-      handleUserStatusChange(reportedUserId, 'banned');
+        if (action === 'warn') {
+          await updateDoc(doc(db, 'users', reportedUserId), { status: 'warned' });
+        } else if (action === 'ban') {
+          await updateDoc(doc(db, 'users', reportedUserId), { status: 'banned', hideProfile: true });
+        }
+      } catch (err) {
+        console.error("Firestore report action error:", err);
+      }
+    } else {
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      if (action === 'warn') {
+        handleUserStatusChange(reportedUserId, 'warned');
+      } else if (action === 'ban') {
+        handleUserStatusChange(reportedUserId, 'banned');
+      }
     }
   };
 
-  // Filtered Users List
+  // Action: Terminate live stream
+  const handleTerminateStream = async (streamId) => {
+    if (isLive && db) {
+      try {
+        await updateDoc(doc(db, 'live_streams', streamId), { status: 'ended' });
+        alert("Broadcast session terminated.");
+      } catch (err) {
+        console.error("Firestore stream termination error:", err);
+      }
+    } else {
+      setStreams(prev => prev.map(s => {
+        if (s.id === streamId) return { ...s, status: 'ended' };
+        return s;
+      }));
+    }
+  };
+
+  // Action: Update date booking status
+  const handleUpdateBookingStatus = async (bookingId, newStatus) => {
+    if (isLive && db) {
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), { status: newStatus });
+      } catch (err) {
+        console.error("Firestore booking update error:", err);
+      }
+    } else {
+      setBookings(prev => prev.map(b => {
+        if (b.id === bookingId) return { ...b, status: newStatus };
+        return b;
+      }));
+    }
+  };
+
+  // Action: Update Gift Credit Cost
+  const handleUpdateGiftCost = (giftId, newCost) => {
+    setGifts(prev => prev.map(g => {
+      if (g.id === giftId) return { ...g, cost: newCost };
+      return g;
+    }));
+  };
+
+  // Action: Save settings
+  const handleSaveSettings = async () => {
+    if (isLive && db) {
+      try {
+        await setDoc(doc(db, 'settings', 'global'), settings);
+        alert("Global configurations successfully synced with Firebase!");
+      } catch (err) {
+        console.error("Firestore settings save error:", err);
+      }
+    } else {
+      alert("Settings saved to app context (Simulated)");
+    }
+  };
+
+  // Filtered Lists
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
       const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -159,34 +574,48 @@ function App() {
     });
   }, [users, searchQuery, userStatusFilter, userGenderFilter, userTierFilter]);
 
-  // Statistics Summary
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      return bookingStatusFilter === 'all' || b.status === bookingStatusFilter;
+    });
+  }, [bookings, bookingStatusFilter]);
+
+  const activeStreams = useMemo(() => {
+    return streams.filter(s => s.status === 'active');
+  }, [streams]);
+
+  // Sidebar Counts
+  const pendingVerificationsCount = users.filter(user => user.verificationStatus === 'pending').length;
+  const pendingReportsCount = reports.length;
+
+  // KPIs
   const kpiData = [
     {
       title: "Total Registered Users",
-      value: users.length * 1000 + 4250, // Styled base
+      value: dynamicStats.totalUsers,
       icon: <Users size={20} />,
-      trend: stats.growthRate,
+      trend: dynamicStats.growthRate,
       colorClass: "pink"
     },
     {
       title: "Daily Active Users",
-      value: stats.activeUsers,
+      value: dynamicStats.activeUsers,
       icon: <Activity size={20} />,
-      trend: stats.activeRate,
+      trend: dynamicStats.activeRate,
       colorClass: "purple"
     },
     {
       title: "Total Matches Formed",
-      value: stats.matchesCount.toLocaleString(),
+      value: dynamicStats.matchesCount.toLocaleString(),
       icon: <Heart size={20} />,
-      trend: stats.matchRate,
+      trend: dynamicStats.matchRate,
       colorClass: "pink"
     },
     {
       title: "Monthly Revenue",
-      value: `$${stats.revenueMonthly.toLocaleString()}`,
+      value: `$${dynamicStats.revenueMonthly.toLocaleString()}`,
       icon: <DollarSign size={20} />,
-      trend: stats.revenueRate,
+      trend: dynamicStats.revenueRate,
       colorClass: "green"
     }
   ];
@@ -194,754 +623,94 @@ function App() {
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
-        <div className="logo-container">
-          <div className="logo-icon">
-            <Heart size={22} fill="white" />
-          </div>
-          <span className="logo-text">DateDash</span>
-          <span className="logo-tag">ADMIN</span>
-        </div>
-
-        <ul className="nav-links">
-          <li>
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
-            >
-              <Activity size={18} />
-              Overview
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
-            >
-              <Users size={18} />
-              User Directory
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setActiveTab('verifications')}
-              className={`nav-link ${activeTab === 'verifications' ? 'active' : ''}`}
-            >
-              <CheckCircle size={18} />
-              Verifications
-              {pendingVerificationsCount > 0 && (
-                <span className="nav-link-badge secondary-badge">{pendingVerificationsCount}</span>
-              )}
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`nav-link ${activeTab === 'reports' ? 'active' : ''}`}
-            >
-              <ShieldAlert size={18} />
-              Abuse Reports
-              {pendingReportsCount > 0 && (
-                <span className="nav-link-badge">{pendingReportsCount}</span>
-              )}
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-            >
-              <SettingsIcon size={18} />
-              App Config
-            </button>
-          </li>
-        </ul>
-
-        <div className="sidebar-footer">
-          <div className="admin-profile">
-            <img
-              src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&h=80&fit=crop"
-              alt="Admin Avatar"
-              className="admin-avatar"
-            />
-            <div className="admin-info">
-              <h4>Sarah Jenkins</h4>
-              <p>Lead Moderator</p>
-            </div>
-          </div>
-        </div>
-      </aside>
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} pendingVerificationsCount={pendingVerificationsCount} pendingReportsCount={pendingReportsCount} />
 
       {/* Main Content Area */}
       <main className="main-content">
-        <header className="header">
-          <div className="page-title">
-            <h1>
-              {activeTab === 'overview' && 'Dashboard Overview'}
-              {activeTab === 'users' && 'User Management'}
-              {activeTab === 'verifications' && 'Verification Requests'}
-              {activeTab === 'reports' && 'Moderation & Reports'}
-              {activeTab === 'settings' && 'System Settings'}
-            </h1>
-            <p>
-              {activeTab === 'overview' && 'Real-time performance metrics and charts'}
-              {activeTab === 'users' && 'Search, filter, edit status and access profiles'}
-              {activeTab === 'verifications' && 'Compare profile avatars with user uploaded selfie verifications'}
-              {activeTab === 'reports' && 'Handle reported users and suspicious activity'}
-              {activeTab === 'settings' && 'Fine-tune matching algorithms, prices and controls'}
-            </p>
-          </div>
-
-          <div className="header-actions">
-            {activeTab === 'users' && (
-              <div className="search-bar">
-                <Search size={18} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search user, email, city..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
-        </header>
+        <Header activeTab={activeTab} isLive={isLive} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
         <section className="content-body">
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === 'overview' && (
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '16px' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <p style={{ color: 'var(--text-secondary)' }}>Synchronizing with Firestore database...</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : (
             <>
-              {/* KPIs Grid */}
-              <div className="stats-grid">
-                {kpiData.map((kpi, idx) => (
-                  <div className="stat-card" key={idx}>
-                    <div className="stat-header">
-                      <span className="stat-title">{kpi.title}</span>
-                      <div className={`stat-icon-container ${kpi.colorClass}`}>
-                        {kpi.icon}
-                      </div>
-                    </div>
-                    <span className="stat-value">{kpi.value}</span>
-                    <div className="stat-footer">
-                      <span className="trend-up">{kpi.trend}</span>
-                      <span className="trend-label">vs last week</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {/* TAB 1: OVERVIEW */}
+              {activeTab === 'overview' && (
+                <OverviewTab
+                  kpiData={kpiData}
+                  stats={stats}
+                  dynamicStats={dynamicStats}
+                  isLive={isLive}
+                  seedFirestoreDatabase={seedFirestoreDatabase}
+                />
+              )}
 
-              {/* Recharts Analytics */}
-              <div className="charts-grid">
-                <div className="chart-card">
-                  <div className="chart-header">
-                    <span className="chart-title">Daily Active Users & Match Rate (Weekly)</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Live Sync Enabled</span>
-                  </div>
-                  <div style={{ width: '100%', height: 300 }}>
-                    <ResponsiveContainer>
-                      <AreaChart data={stats.dailyActiveTrend}>
-                        <defs>
-                          <linearGradient id="activeGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--secondary)" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="var(--secondary)" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="matchGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                        <XAxis dataKey="day" stroke="var(--text-secondary)" />
-                        <YAxis stroke="var(--text-secondary)" />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'white' }} />
-                        <Area type="monotone" dataKey="active" stroke="var(--secondary)" fillOpacity={1} fill="url(#activeGrad)" name="Active Sessions" />
-                        <Area type="monotone" dataKey="matches" stroke="var(--primary)" fillOpacity={1} fill="url(#matchGrad)" name="Matches Made" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              {/* TAB 2: USER DIRECTORY */}
+              {activeTab === 'users' && (
+                <UsersTab
+                  userStatusFilter={userStatusFilter}
+                  setUserStatusFilter={setUserStatusFilter}
+                  userGenderFilter={userGenderFilter}
+                  setUserGenderFilter={setUserGenderFilter}
+                  userTierFilter={userTierFilter}
+                  setUserTierFilter={setUserTierFilter}
+                  filteredUsers={filteredUsers}
+                  setSelectedUser={setSelectedUser}
+                />
+              )}
 
-                <div className="chart-card">
-                  <div className="chart-header">
-                    <span className="chart-title">Monthly Signups</span>
-                  </div>
-                  <div style={{ width: '100%', height: 300 }}>
-                    <ResponsiveContainer>
-                      <BarChart data={stats.registrationsTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                        <XAxis dataKey="month" stroke="var(--text-secondary)" />
-                        <YAxis stroke="var(--text-secondary)" />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'white' }} />
-                        <Legend />
-                        <Bar dataKey="free" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Free Users" />
-                        <Bar dataKey="premium" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Premium Tier" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
+              {/* TAB 3: VERIFICATION QUEUE */}
+              {activeTab === 'verifications' && (
+                <VerificationsTab users={users} handleVerification={handleVerification} />
+              )}
 
-              {/* Quick Info & Distribution */}
-              <div className="charts-grid" style={{ gridTemplateColumns: '1fr 2fr' }}>
-                <div className="chart-card">
-                  <div className="chart-header">
-                    <span className="chart-title">Gender Distribution</span>
-                  </div>
-                  <div style={{ width: '100%', height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ResponsiveContainer>
-                      <PieChart>
-                        <Pie
-                          data={stats.genderDistribution}
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {stats.genderDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '10px', fontSize: '13px' }}>
-                    {stats.genderDistribution.map((entry, i) => (
-                      <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: entry.color }}></span>
-                        {entry.name} ({Math.round(entry.value / 142.5)}%)
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              {/* TAB 4: ABUSE REPORTS */}
+              {activeTab === 'reports' && (
+                <ReportsTab reports={reports} handleReportAction={handleReportAction} />
+              )}
 
-                <div className="chart-card">
-                  <div className="chart-header">
-                    <span className="chart-title">Platform Guidelines & System Warnings</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-tertiary)', padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
-                      <AlertTriangle size={24} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-                      <div>
-                        <h4 style={{ fontSize: '14px', fontWeight: 600 }}>Unverified Match Rate is Increasing</h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Profiles matching without face verification has increased by 14% this week. We recommend requiring verification for premium badges in settings.</p>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-tertiary)', padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--secondary)' }}>
-                      <Sparkles size={24} style={{ color: 'var(--secondary)', flexShrink: 0 }} />
-                      <div>
-                        <h4 style={{ fontSize: '14px', fontWeight: 600 }}>Algorithm Balancing Successful</h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>The location weighting factor has improved overall swipe satisfaction score from 3.8 to 4.2 stars based on user reports.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* TAB 5: OPERATIONS HUB */}
+              {activeTab === 'operations' && (
+                <OperationsTab
+                  opsSubTab={opsSubTab}
+                  setOpsSubTab={setOpsSubTab}
+                  activeStreams={activeStreams}
+                  bookings={bookings}
+                  transactions={transactions}
+                  gifts={gifts}
+                  bookingStatusFilter={bookingStatusFilter}
+                  setBookingStatusFilter={setBookingStatusFilter}
+                  filteredBookings={filteredBookings}
+                  handleTerminateStream={handleTerminateStream}
+                  handleUpdateBookingStatus={handleUpdateBookingStatus}
+                  handleUpdateGiftCost={handleUpdateGiftCost}
+                />
+              )}
+
+              {/* TAB 6: APP CONFIG / SETTINGS */}
+              {activeTab === 'settings' && (
+                <SettingsTab
+                  settings={settings}
+                  setSettings={setSettings}
+                  handleSaveSettings={handleSaveSettings}
+                />
+              )}
             </>
-          )}
-
-          {/* TAB 2: USER DIRECTORY */}
-          {activeTab === 'users' && (
-            <div className="table-card">
-              <div className="table-controls">
-                <div className="table-filters">
-                  <select
-                    className="filter-select"
-                    value={userStatusFilter}
-                    onChange={(e) => setUserStatusFilter(e.target.value)}
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="active">Active</option>
-                    <option value="warned">Warned</option>
-                    <option value="banned">Banned</option>
-                  </select>
-
-                  <select
-                    className="filter-select"
-                    value={userGenderFilter}
-                    onChange={(e) => setUserGenderFilter(e.target.value)}
-                  >
-                    <option value="all">All Genders</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                  </select>
-
-                  <select
-                    className="filter-select"
-                    value={userTierFilter}
-                    onChange={(e) => setUserTierFilter(e.target.value)}
-                  >
-                    <option value="all">All Tiers</option>
-                    <option value="premium">Premium Only</option>
-                    <option value="free">Free Only</option>
-                  </select>
-                </div>
-
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  Showing {filteredUsers.length} of {users.length} users
-                </div>
-              </div>
-
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Gender & Age</th>
-                    <th>Location</th>
-                    <th>Membership</th>
-                    <th>Verification</th>
-                    <th>Account Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <div className="user-cell">
-                          <img src={user.avatar} alt={user.name} className="user-table-avatar" />
-                          <div className="user-name-wrapper">
-                            <span className="user-table-name">{user.name}</span>
-                            <span className="user-table-email">{user.email}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{user.gender}, {user.age}</td>
-                      <td>{user.location}</td>
-                      <td>
-                        <span className={`status-badge ${user.isPremium ? 'premium' : 'standard'}`}>
-                          {user.isPremium ? 'Premium' : 'Standard'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${user.verificationStatus}`}>
-                          {user.verificationStatus}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${user.status}`}>
-                          {user.status}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button
-                          className="action-btn-secondary"
-                          style={{ display: 'inline-flex', padding: '6px 12px' }}
-                          onClick={() => setSelectedUser(user)}
-                        >
-                          Review Profile
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredUsers.length === 0 && (
-                    <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                        No users match the selected filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* TAB 3: VERIFICATION QUEUE */}
-          {activeTab === 'verifications' && (
-            <div>
-              {verifications.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
-                  <CheckCircle size={48} style={{ color: 'var(--success)', marginBottom: '16px' }} />
-                  <h2>All Caught Up!</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>There are no profile verification requests currently pending approval.</p>
-                </div>
-              ) : (
-                <div className="queue-grid">
-                  {verifications.map((req) => (
-                    <div className="queue-card" key={req.id}>
-                      <div className="queue-card-header">
-                        <div className="queue-card-user">
-                          <img src={req.userAvatar} alt={req.userName} className="queue-card-avatar" />
-                          <div className="queue-card-meta">
-                            <h3>{req.userName}</h3>
-                            <span>Submitted: {new Date(req.date).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        <span className="status-badge pending">Pending</span>
-                      </div>
-
-                      <div className="queue-comparison">
-                        <div className="comparison-box">
-                          <span>Profile Picture</span>
-                          <img src={req.userAvatar} alt="Profile" className="comparison-img" />
-                        </div>
-                        <div className="comparison-box">
-                          <span>Verification Selfie</span>
-                          <img src={req.verificationPhoto} alt="Verification Selfie" className="comparison-img" />
-                        </div>
-                      </div>
-
-                      <div className="queue-actions">
-                        <button
-                          className="btn-reject"
-                          onClick={() => handleVerification(req.id, req.userId, false)}
-                        >
-                          <UserX size={16} />
-                          Reject / Reject Tag
-                        </button>
-                        <button
-                          className="btn-approve"
-                          onClick={() => handleVerification(req.id, req.userId, true)}
-                        >
-                          <UserCheck size={16} />
-                          Verify Profile
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: ABUSE REPORTS */}
-          {activeTab === 'reports' && (
-            <div>
-              {reports.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
-                  <ShieldAlert size={48} style={{ color: 'var(--success)', marginBottom: '16px' }} />
-                  <h2>Safety Clean</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>No user-reported profiles or harassment flags in the queue.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  {reports.map((report) => (
-                    <div className="queue-card" key={report.id} style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr 1.2fr', gap: '24px', alignItems: 'stretch' }}>
-                      
-                      {/* Left: User Reported Info */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
-                        <div>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>REPORTED PROFILE</span>
-                          <div className="queue-card-user" style={{ marginTop: '6px' }}>
-                            <img src={report.reportedAvatar} alt={report.reportedName} className="queue-card-avatar" />
-                            <div>
-                              <h3 style={{ fontSize: '15px' }}>{report.reportedName}</h3>
-                              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>ID: {report.reportedId}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ marginTop: '8px' }}>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>FILED BY</span>
-                          <p style={{ fontSize: '13px', fontWeight: 500, marginTop: '2px' }}>{report.reporterName} (ID: {report.reporterId})</p>
-                        </div>
-                      </div>
-
-                      {/* Center: Report Reason & Chat Snippet */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
-                        <div className="report-reason">
-                          <strong>Reason:</strong> {report.reason}
-                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{report.details}</p>
-                        </div>
-
-                        {report.chatSnippet && (
-                          <div className="chat-log">
-                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                              <MessageSquare size={12} /> CHAT LOG EVIDENCE
-                            </span>
-                            {report.chatSnippet.split('\n').map((line, key) => (
-                              <div key={key} className="chat-bubble">
-                                {line}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Moderation Actions */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', borderLeft: '1px solid var(--border-color)', paddingLeft: '24px' }}>
-                        <button
-                          className="btn-approve"
-                          onClick={() => handleReportAction(report.id, report.reportedId, 'dismiss')}
-                        >
-                          Dismiss Flag
-                        </button>
-                        <button
-                          className="btn-reject" // yellow outline style
-                          style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)', borderColor: 'rgba(245, 158, 11, 0.25)' }}
-                          onClick={() => handleReportAction(report.id, report.reportedId, 'warn')}
-                        >
-                          <AlertTriangle size={14} />
-                          Issue Warning
-                        </button>
-                        <button
-                          className="btn-danger"
-                          onClick={() => handleReportAction(report.id, report.reportedId, 'ban')}
-                        >
-                          <Ban size={14} />
-                          Ban User Account
-                        </button>
-                      </div>
-
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 5: APP CONFIG / SETTINGS */}
-          {activeTab === 'settings' && (
-            <div className="settings-container">
-              {/* Algorithm Configuration */}
-              <div className="settings-section">
-                <div className="settings-section-header">
-                  <h3 className="settings-section-title">Matching Algorithm Weighting</h3>
-                  <p className="settings-section-desc">Adjust how critical different filters are when recommending matches to users.</p>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">
-                    <span>Location Proximity Weight</span>
-                    <span className="form-label-value">{settings.matchAlgorithmWeightLocation}%</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    className="form-range"
-                    value={settings.matchAlgorithmWeightLocation}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      const remainder = 100 - val;
-                      setSettings(prev => ({
-                        ...prev,
-                        matchAlgorithmWeightLocation: val,
-                        matchAlgorithmWeightBio: Math.round(remainder * 0.45),
-                        matchAlgorithmWeightInterests: Math.round(remainder * 0.55),
-                      }));
-                    }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">
-                    <span>Shared Interests Weight</span>
-                    <span className="form-label-value">{settings.matchAlgorithmWeightInterests}%</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    className="form-range"
-                    value={settings.matchAlgorithmWeightInterests}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      const remainder = 100 - val;
-                      setSettings(prev => ({
-                        ...prev,
-                        matchAlgorithmWeightInterests: val,
-                        matchAlgorithmWeightLocation: Math.round(remainder * 0.6),
-                        matchAlgorithmWeightBio: Math.round(remainder * 0.4),
-                      }));
-                    }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">
-                    <span>Bio Similarity & Keywords Weight</span>
-                    <span className="form-label-value">{settings.matchAlgorithmWeightBio}%</span>
-                  </label>
-                  <input type="range" className="form-range" disabled value={settings.matchAlgorithmWeightBio} />
-                </div>
-              </div>
-
-              {/* Swipe & Pricing Rules */}
-              <div className="settings-section">
-                <div className="settings-section-header">
-                  <h3 className="settings-section-title">Subscription & Swipe Controls</h3>
-                  <p className="settings-section-desc">Set limits for free tier accounts and adjust subscription pricing models.</p>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                  <div className="form-group">
-                    <label className="form-label">Daily Swipe Limit (Free Tier)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={settings.swipeLimitFree}
-                      onChange={(e) => setSettings(prev => ({ ...prev, swipeLimitFree: parseInt(e.target.value) || 0 }))}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Premium Membership Monthly Price ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-input"
-                      value={settings.premiumPriceMonthly}
-                      onChange={(e) => setSettings(prev => ({ ...prev, premiumPriceMonthly: parseFloat(e.target.value) || 0 }))}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Safety Regulations */}
-              <div className="settings-section">
-                <div className="settings-section-header">
-                  <h3 className="settings-section-title">Safety & Spam Regulations</h3>
-                  <p className="settings-section-desc">Global safety rules for profiles matching and AI automated bans.</p>
-                </div>
-
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-checkbox-label">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox"
-                      checked={settings.enableShadowBans}
-                      onChange={(e) => setSettings(prev => ({ ...prev, enableShadowBans: e.target.checked }))}
-                    />
-                    <span>Enable Shadow-Banning (Spam profiles match only with other spam accounts)</span>
-                  </label>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Flag Moderation Level</label>
-                  <select
-                    className="form-input"
-                    value={settings.moderationStrictness}
-                    onChange={(e) => setSettings(prev => ({ ...prev, moderationStrictness: e.target.value }))}
-                  >
-                    <option value="relaxed">Relaxed (Reported accounts warned after 5 reports)</option>
-                    <option value="moderate">Moderate (Warned after 3 reports, shadow-ban checked)</option>
-                    <option value="strict">Strict (Immediate profile hidden on 2 flags pending review)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
-                <button
-                  className="btn-primary"
-                  style={{ maxWidth: '200px' }}
-                  onClick={() => alert("Settings saved to app context (Simulated)")}
-                >
-                  Save Configurations
-                </button>
-              </div>
-            </div>
           )}
         </section>
       </main>
 
       {/* USER DETAILS MODAL */}
-      {selectedUser && (
-        <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>User Details: {selectedUser.id}</h3>
-              <button className="modal-close" onClick={() => setSelectedUser(null)}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="user-profile-summary">
-                <img src={selectedUser.avatar} alt={selectedUser.name} className="user-profile-avatar" />
-                <div className="user-profile-details">
-                  <h4>{selectedUser.name}</h4>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{selectedUser.email}</p>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <span className={`status-badge ${selectedUser.isPremium ? 'premium' : 'standard'}`}>
-                      {selectedUser.isPremium ? 'Premium Tier' : 'Standard Tier'}
-                    </span>
-                    <span className={`status-badge ${selectedUser.verificationStatus}`}>
-                      {selectedUser.verificationStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="user-profile-info-grid">
-                <div className="info-item">
-                  <span className="info-label">Gender / Age</span>
-                  <span className="info-val">{selectedUser.gender}, {selectedUser.age} years old</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Location</span>
-                  <span className="info-val">{selectedUser.location}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Joined Date</span>
-                  <span className="info-val">{selectedUser.joinedDate}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Status Flag</span>
-                  <span className={`status-badge ${selectedUser.status}`} style={{ width: 'fit-content' }}>
-                    {selectedUser.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="info-item" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span className="info-label">Bio Details</span>
-                <p style={{ fontSize: '14px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                  "{selectedUser.bio || 'No bio provided.'}"
-                </p>
-              </div>
-
-              <div className="info-item" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span className="info-label">Moderation History</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: selectedUser.reportedCount > 2 ? 'var(--danger)' : 'var(--text-secondary)' }}>
-                  <AlertTriangle size={16} />
-                  <span>Reported {selectedUser.reportedCount} times by other matches.</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="action-btn-secondary"
-                style={{ flexGrow: 1, justifyContent: 'center' }}
-                onClick={() => handleTogglePremium(selectedUser.id)}
-              >
-                {selectedUser.isPremium ? 'Downgrade to Standard' : 'Promote to Premium'}
-              </button>
-
-              {selectedUser.status !== 'active' && (
-                <button
-                  className="btn-approve"
-                  style={{ flexGrow: 1, padding: '10px' }}
-                  onClick={() => handleUserStatusChange(selectedUser.id, 'active')}
-                >
-                  Unban/Restore
-                </button>
-              )}
-
-              {selectedUser.status === 'active' && (
-                <>
-                  <button
-                    className="btn-reject"
-                    style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)', borderColor: 'rgba(245, 158, 11, 0.25)', flexGrow: 1 }}
-                    onClick={() => handleUserStatusChange(selectedUser.id, 'warned')}
-                  >
-                    Warn User
-                  </button>
-                  <button
-                    className="btn-danger"
-                    style={{ flexGrow: 1 }}
-                    onClick={() => handleUserStatusChange(selectedUser.id, 'banned')}
-                  >
-                    Ban User
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <UserDetailsModal
+        selectedUser={selectedUser}
+        setSelectedUser={setSelectedUser}
+        handleTogglePremium={handleTogglePremium}
+        handleUserStatusChange={handleUserStatusChange}
+      />
     </div>
   );
 }
