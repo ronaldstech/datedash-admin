@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle, UserX, UserCheck } from 'lucide-react';
 
 /**

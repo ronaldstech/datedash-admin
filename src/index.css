@@ -68,6 +68,12 @@ body {
   padding-left: 8px;
 }
 
+.logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
 .logo-icon {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   width: 32px;

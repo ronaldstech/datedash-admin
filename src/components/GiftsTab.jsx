@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * GiftsTab Component.
@@ -7,6 +6,15 @@ import React from 'react';
  * - handleUpdateGiftCost: function (giftId, newCost)
  */
 export default function GiftsTab({ gifts, handleUpdateGiftCost }) {
+  if (gifts.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
+        <h2>No Gifts Configured</h2>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Add gift documents to the Firestore gifts collection to manage credit costs here.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="queue-grid">
       {gifts.map(g => (

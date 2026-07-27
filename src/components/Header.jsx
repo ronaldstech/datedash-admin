@@ -1,4 +1,3 @@
-import React from 'react';
 import { Search, Menu } from 'lucide-react';
 
 /**
@@ -44,7 +43,7 @@ export default function Header({ activeTab, isLive, searchQuery, setSearchQuery,
               letterSpacing: '0.5px'
             }}
           >
-            {isLive ? '● LIVE FIREBASE' : '● OFFLINE MOCK'}
+            {isLive ? 'LIVE FIREBASE' : 'FIREBASE NOT CONFIGURED'}
           </span>
         </h1>
         <p>

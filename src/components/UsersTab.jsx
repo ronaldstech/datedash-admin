@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * UsersTab Component.
@@ -112,6 +111,13 @@ export default function UsersTab({
               </td>
             </tr>
           ))}
+          {filteredUsers.length === 0 && (
+            <tr>
+              <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                No users matched the current filters.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

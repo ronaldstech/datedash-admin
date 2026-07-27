@@ -1,4 +1,3 @@
-import React from 'react';
 import { Database, AlertTriangle } from 'lucide-react';
 import {
   AreaChart,
@@ -23,9 +22,8 @@ import {
  * - stats: Object containing trends data
  * - dynamicStats: Object containing calculated rates and distributions
  * - isLive: Boolean indicating Firebase connection state
- * - seedFirestoreDatabase: Function to populate database
  */
-export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, seedFirestoreDatabase }) {
+export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, connectionError }) {
   return (
     <>
       <div className="stats-grid">
@@ -40,7 +38,7 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, seed
             <span className="stat-value">{kpi.value}</span>
             <div className="stat-footer">
               <span className="trend-up">{kpi.trend}</span>
-              <span className="trend-label">vs last week</span>
+              <span className="trend-label">current data</span>
             </div>
           </div>
         ))}
@@ -137,22 +135,19 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, seed
               <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-tertiary)', padding: '20px', borderRadius: '12px', border: '1px dashed var(--border-color)', alignItems: 'center' }}>
                 <Database size={32} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                 <div>
-                  <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Seed Full Datasets to Firestore</h4>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px', marginBottom: '12px' }}>
-                    Pre-populate the connected Firebase project with all application configurations, user matches profiles, active booking dates, virtual gift catalogs, transactions logs, and active stream channels.
+                  <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Firestore Data Source</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                    Firestore is connected. The dashboard is reading users, reports, bookings, streams, gifts, transactions, and settings from the live project.
                   </p>
-                  <button className="btn-primary" style={{ display: 'inline-flex', padding: '6px 12px', fontSize: '12px', width: 'fit-content' }} onClick={seedFirestoreDatabase}>
-                    Seed Firestore Database
-                  </button>
                 </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-tertiary)', padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
                 <AlertTriangle size={24} style={{ color: 'var(--warning)', flexShrink: 0 }} />
                 <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 600 }}>Simulated Sandbox Mode</h4>
+                  <h4 style={{ fontSize: '14px', fontWeight: 600 }}>Firebase Not Configured</h4>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                    Add Firebase SDK environment variables in `.env` to pull configurations from the live database. Live streams and date bookings logs are currently generated locally.
+                    {connectionError || 'Add Firebase SDK environment variables in `.env` to pull records from the live database.'}
                   </p>
                 </div>
               </div>
