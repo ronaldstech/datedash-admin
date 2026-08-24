@@ -1,12 +1,3 @@
-
-/**
- * BookingsTab Component.
- * Props:
- * - bookingStatusFilter: string
- * - setBookingStatusFilter: function
- * - filteredBookings: array of booking objects
- * - handleUpdateBookingStatus: function (bookingId, newStatus)
- */
 export default function BookingsTab({
   bookingStatusFilter,
   setBookingStatusFilter,

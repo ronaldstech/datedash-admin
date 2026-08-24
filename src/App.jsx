@@ -113,7 +113,8 @@ const mapReport = (docSnap) => {
     details: data.details || data.description || '',
     chatSnippet: data.chatSnippet || data.message || '',
     status: data.status || 'pending',
-    date: toIsoString(data.date || data.createdAt || data.timestamp)
+    date: toIsoString(data.date || data.createdAt || data.timestamp),
+    timestamp: toIsoString(data.timestamp || data.createdAt || data.date)
   };
 };
 
@@ -216,6 +217,7 @@ function App() {
   const [bookings, setBookings] = useState([]);
   const [streams, setStreams] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [matches, setMatches] = useState([]);
   const [gifts, setGifts] = useState([]);
   const [settings, setSettings] = useState(initialSettings);
   const [loading, setLoading] = useState(Boolean(isFirebaseEnabled && db));
@@ -237,7 +239,7 @@ function App() {
       return undefined;
     }
 
-    let remainingInitialLoads = 6;
+    let remainingInitialLoads = 7;
     const markLoaded = () => {
       remainingInitialLoads -= 1;
       if (remainingInitialLoads <= 0) setLoading(false);
@@ -260,18 +262,42 @@ function App() {
 
     const unsubscribeUsers = listenCollection('users', mapUser, setUsers);
     const unsubscribeReports = listenCollection('reports', mapReport, setReports);
-    const unsubscribeBookings = listenCollection('bookings', mapBooking, setBookings);
+    const unsubscribeBookings = listenCollection('meetups', mapBooking, setBookings);
     const unsubscribeStreams = listenCollection('live_streams', mapStream, setStreams);
     const unsubscribeTransactions = listenCollection('transactions', mapTransaction, setTransactions);
+    const unsubscribeMatches = listenCollection(
+      'matches',
+      (docSnap) => ({ id: docSnap.id, ...docSnap.data() }),
+      setMatches
+    );
     const unsubscribeGifts = listenCollection('gifts', mapGift, setGifts);
 
     const unsubscribeSettings = onSnapshot(
       doc(db, 'settings', 'global'),
       (docSnap) => {
-        if (docSnap.exists()) setSettings({ ...initialSettings, ...docSnap.data() });
+        if (docSnap.exists()) {
+          setSettings((prev) => ({ ...initialSettings, ...prev, ...docSnap.data() }));
+        }
       },
       (error) => {
         console.warn('Firestore settings listener error:', error);
+      }
+    );
+
+    const unsubscribeAppSettings = onSnapshot(
+      doc(db, 'app_settings', 'video_chat'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSettings((prev) => ({
+            ...prev,
+            countries: data.countries && data.countries.length > 0 ? data.countries : prev.countries || initialSettings.countries,
+            languages: data.languages && data.languages.length > 0 ? data.languages : prev.languages || initialSettings.languages
+          }));
+        }
+      },
+      (error) => {
+        console.warn('Firestore app_settings listener error:', error);
       }
     );
 
@@ -281,8 +307,10 @@ function App() {
       unsubscribeBookings();
       unsubscribeStreams();
       unsubscribeTransactions();
+      unsubscribeMatches();
       unsubscribeGifts();
       unsubscribeSettings();
+      unsubscribeAppSettings();
     };
   }, []);
 
@@ -292,7 +320,8 @@ function App() {
     const totalUsers = users.length;
     const activeUsers = users.filter((user) => user.status === 'active').length;
     const premiumUsers = users.filter((user) => user.isPremium).length;
-    const matchesCount = users.reduce((sum, user) => sum + Number(user.matchesCount || user.matchCount || 0), 0);
+    const matchesCount =
+      matches.length || users.reduce((sum, user) => sum + Number(user.matchesCount || user.matchCount || 0), 0);
     const revenueMonthly = transactions
       .filter((transaction) => transaction.status === 'success')
       .reduce((sum, transaction) => sum + transaction.amount, 0);
@@ -319,7 +348,7 @@ function App() {
         }
       ]
     };
-  }, [users, transactions, stats]);
+  }, [users, transactions, matches, stats]);
 
   const handleVerification = async (userId, approve) => {
     if (isLive && db) {
@@ -403,7 +432,7 @@ function App() {
     if (!isLive || !db) return;
 
     try {
-      await updateDoc(doc(db, 'bookings', bookingId), { status: newStatus });
+      await updateDoc(doc(db, 'meetups', bookingId), { status: newStatus });
     } catch (err) {
       console.error('Firestore booking update error:', err);
     }
@@ -421,14 +450,32 @@ function App() {
     }
   };
 
-  const handleSaveSettings = async () => {
-    if (!isLive || !db) return;
+  const handleSaveSettings = async (customSettings) => {
+    const targetSettings = customSettings || settings;
+
+    if (!isLive || !db) {
+      alert('Local preview mode: Settings updated locally. Connect Firebase to sync remotely.');
+      return;
+    }
 
     try {
-      await setDoc(doc(db, 'settings', 'global'), settings, { merge: true });
-      alert('Global configurations successfully synced with Firebase.');
+      await setDoc(doc(db, 'settings', 'global'), targetSettings, { merge: true });
+
+      // Synchronize with Flutter app video_chat config in app_settings/video_chat
+      await setDoc(
+        doc(db, 'app_settings', 'video_chat'),
+        {
+          countries: targetSettings.countries || [],
+          languages: targetSettings.languages || [],
+          updatedAt: new Date()
+        },
+        { merge: true }
+      );
+
+      alert('Global configurations and Video Chat (Countries & Languages) successfully synced with Firebase!');
     } catch (err) {
       console.error('Firestore settings save error:', err);
+      alert(`Error syncing with Firebase: ${err.message}`);
     }
   };
 
@@ -457,8 +504,26 @@ function App() {
     return streams.filter((stream) => stream.status === 'active');
   }, [streams]);
 
+  const userById = useMemo(() => {
+    return new Map(users.map((user) => [user.id, user]));
+  }, [users]);
+
+  const reportsWithUserDetails = useMemo(() => {
+    return reports.map((report) => {
+      const reporter = userById.get(report.reporterId);
+      const reported = userById.get(report.reportedId);
+
+      return {
+        ...report,
+        reporterName: report.reporterName !== 'Unknown reporter' ? report.reporterName : reporter?.name || report.reporterId,
+        reportedName: report.reportedName !== 'Unknown user' ? report.reportedName : reported?.name || report.reportedId,
+        reportedAvatar: report.reportedAvatar !== DEFAULT_AVATAR ? report.reportedAvatar : reported?.avatar || DEFAULT_AVATAR
+      };
+    });
+  }, [reports, userById]);
+
   const pendingVerificationsCount = users.filter((user) => user.verificationStatus === 'pending').length;
-  const pendingReportsCount = reports.length;
+  const pendingReportsCount = reportsWithUserDetails.length;
 
   const kpiData = [
     {
@@ -562,7 +627,7 @@ function App() {
               )}
 
               {activeTab === 'reports' && (
-                <ReportsTab reports={reports} handleReportAction={handleReportAction} />
+                <ReportsTab reports={reportsWithUserDetails} handleReportAction={handleReportAction} />
               )}
 
               {activeTab === 'streams' && (

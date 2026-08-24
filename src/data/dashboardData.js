@@ -182,4 +182,40 @@ export const initialSettings = {
   matchAlgorithmWeightInterests: 30,
   enableShadowBans: true,
   moderationStrictness: "moderate", // relaxed, moderate, strict
+  countries: [
+    'Malawi',
+    'United States',
+    'Kenya',
+    'Tanzania',
+    'United Kingdom',
+    'Spain',
+    'France',
+    'Germany',
+    'Brazil',
+    'Canada',
+    'Australia',
+    'India',
+    'Japan',
+    'Italy',
+    'Mexico',
+    'South Africa',
+    'Nigeria',
+    'South Korea',
+    'China'
+  ],
+  languages: [
+    'English',
+    'Kiswahili',
+    'Chichewa',
+    'Spanish',
+    'French',
+    'German',
+    'Portuguese',
+    'Hindi',
+    'Japanese',
+    'Korean',
+    'Chinese',
+    'Italian'
+  ]
 };
+
