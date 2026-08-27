@@ -1,4 +1,22 @@
-import { Users, Activity, CheckCircle, ShieldAlert, Radio, Settings as SettingsIcon, Calendar, Receipt, Gift, X } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Users,
+  Activity,
+  CheckCircle,
+  ShieldAlert,
+  Radio,
+  Settings as SettingsIcon,
+  Calendar,
+  Receipt,
+  Gift,
+  X,
+  ChevronDown,
+  Palette,
+  Globe,
+  Sliders,
+  CreditCard,
+  ShieldCheck
+} from 'lucide-react';
 import logo from '../assets/logo.png';
 
 /**
@@ -6,6 +24,8 @@ import logo from '../assets/logo.png';
  * Props:
  * - activeTab: current active tab identifier
  * - setActiveTab: function to switch tabs
+ * - activeSettingsSubTab: current sub-tab inside settings
+ * - setActiveSettingsSubTab: function to change sub-tab
  * - pendingVerificationsCount: number of users pending verification
  * - pendingReportsCount: number of pending abuse reports
  * - activeStreamsCount: number of active live streams
@@ -16,13 +36,39 @@ import logo from '../assets/logo.png';
 export default function Sidebar({
   activeTab,
   setActiveTab,
+  activeSettingsSubTab = 'appearance',
+  setActiveSettingsSubTab,
   pendingVerificationsCount,
   pendingReportsCount,
   activeStreamsCount = 0,
   bookingsCount = 0,
   mobileMenuOpen,
-  setMobileMenuOpen
+  setMobileMenuOpen,
+  currentAdmin,
+  onLogout
 }) {
+  const [settingsExpanded, setSettingsExpanded] = useState(true);
+
+  const settingsSubMenuItems = [
+    { id: 'appearance', label: 'Theme & Style', icon: Palette },
+    { id: 'localization', label: 'Countries & Languages', icon: Globe },
+    { id: 'algorithm', label: 'Match Algorithm', icon: Sliders },
+    { id: 'monetization', label: 'Pricing & Limits', icon: CreditCard },
+    { id: 'safety', label: 'Safety & Moderation', icon: ShieldCheck }
+  ];
+
+  const handleSettingsClick = () => {
+    setActiveTab('settings');
+    setSettingsExpanded((prev) => (activeTab === 'settings' ? !prev : true));
+  };
+
+  const handleSubMenuClick = (subId) => {
+    setActiveTab('settings');
+    if (setActiveSettingsSubTab) {
+      setActiveSettingsSubTab(subId);
+    }
+  };
+
   return (
     <>
       {/* Mobile Backdrop overlay */}
@@ -42,6 +88,37 @@ export default function Sidebar({
           >
             <X size={20} />
           </button>
+        </div>
+
+        {/* Admin profile at the top below logo */}
+        <div className="sidebar-admin-header">
+          <img
+            src={
+              currentAdmin?.avatar ||
+              'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&h=80&fit=crop'
+            }
+            alt="Admin Avatar"
+            className="admin-avatar"
+          />
+          <div className="admin-info" style={{ overflow: 'hidden', flex: 1 }}>
+            <h4 style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {currentAdmin?.name || 'Administrator'}
+            </h4>
+            <p style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {currentAdmin?.role || currentAdmin?.email || 'Admin Portal'}
+            </p>
+          </div>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              style={{ padding: '6px', borderRadius: '8px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+              title="Log Out"
+              aria-label="Log Out"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
 
         <ul className="nav-links">
@@ -129,30 +206,44 @@ export default function Sidebar({
               Virtual Gifts
             </button>
           </li>
-          <li>
+
+          {/* App Config with Submenu below */}
+          <li className="nav-item-group">
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={handleSettingsClick}
               className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
             >
               <SettingsIcon size={18} />
-              App Config
+              <span>App Config</span>
+              <ChevronDown
+                size={16}
+                className={`nav-link-chevron ${settingsExpanded && activeTab === 'settings' ? 'open' : ''}`}
+              />
             </button>
+
+            {/* Sub-menu below App Config */}
+            {settingsExpanded && (
+              <div className="sidebar-submenu">
+                {settingsSubMenuItems.map((sub) => {
+                  const SubIcon = sub.icon;
+                  const isSubActive = activeTab === 'settings' && activeSettingsSubTab === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => handleSubMenuClick(sub.id)}
+                      className={`sidebar-submenu-btn ${isSubActive ? 'active' : ''}`}
+                    >
+                      <SubIcon size={14} />
+                      <span>{sub.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </li>
         </ul>
 
-        <div className="sidebar-footer">
-          <div className="admin-profile">
-            <img
-              src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&h=80&fit=crop"
-              alt="Admin Avatar"
-              className="admin-avatar"
-            />
-            <div className="admin-info">
-              <h4>Sarah Jenkins</h4>
-              <p>Lead Moderator</p>
-            </div>
-          </div>
-        </div>
       </aside>
     </>
   );

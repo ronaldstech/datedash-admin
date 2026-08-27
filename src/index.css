@@ -89,6 +89,247 @@ body {
   background-color: var(--bg-primary);
 }
 
+/* ==========================================================================
+   ADMIN LOGIN SCREEN STYLING
+   ========================================================================== */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  z-index: 1;
+}
+
+.login-backdrop-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, var(--primary-glow) 0%, var(--secondary-glow) 50%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.login-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.login-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.login-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--danger);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.login-error-icon {
+  flex-shrink: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.login-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 14px 12px 42px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.login-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.login-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px var(--primary-glow);
+  margin-top: 6px;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+.login-footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  text-align: center;
+}
+
+.login-security-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.login-security-notice svg {
+  color: var(--success);
+}
+
+.login-dev-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.login-dev-hint code {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.logout-btn-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn-header:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 /* Sidebar Styling - Premium & Clean */
 .sidebar {
   background: var(--bg-sidebar);
@@ -106,7 +347,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 36px;
+  margin-bottom: 0;
   padding-left: 8px;
 }
 
@@ -199,6 +440,66 @@ body {
   opacity: 1;
 }
 
+.nav-item-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-link-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.nav-link-chevron.open {
+  transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 20px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border-color);
+  margin-top: 4px;
+  margin-bottom: 6px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.sidebar-submenu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--nav-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 12.5px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sidebar-submenu-btn:hover {
+  color: var(--text-primary);
+  background: var(--nav-hover-bg);
+}
+
+.sidebar-submenu-btn.active {
+  color: var(--primary);
+  background: var(--nav-active-bg);
+  font-weight: 600;
+}
+
+.sidebar-submenu-btn.active svg {
+  color: var(--primary);
+}
+
 .nav-link-badge {
   margin-left: auto;
   font-size: 10px;
@@ -217,9 +518,13 @@ body {
   border: 1px solid var(--border-color);
 }
 
-.sidebar-footer {
-  border-top: 1px solid var(--border-color);
-  padding-top: 24px;
+.sidebar-admin-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 14px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .admin-profile {
@@ -230,16 +535,17 @@ body {
 }
 
 .admin-avatar {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 1px solid var(--border-color);
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .admin-info h4 {
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -950,8 +1256,56 @@ body {
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  max-width: 800px;
+  gap: 24px;
+  max-width: 900px;
+}
+
+/* Sub-tabs Navigation Bar */
+.settings-nav-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.settings-nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.settings-tab-btn.active {
+  color: white;
+  background: linear-gradient(135deg, var(--primary), #e11d48);
+  font-weight: 600;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.settings-tab-btn.active svg {
+  color: white;
 }
 
 .settings-section {

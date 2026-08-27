@@ -12,11 +12,18 @@ import TransactionsTab from './components/TransactionsTab';
 import GiftsTab from './components/GiftsTab';
 import SettingsTab from './components/SettingsTab';
 import UserDetailsModal from './components/UserDetailsModal';
-import { initialSettings } from './data/dashboardData';
-import { db, isFirebaseEnabled } from './firebase';
+import LoginScreen from './components/LoginScreen';
+import { initialSettings, initialUsers, initialReports, initialVerifications } from './data/dashboardData';
+import { db, auth, isFirebaseEnabled } from './firebase';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   updateDoc,
   deleteDoc,
@@ -212,6 +219,12 @@ function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLive] = useState(Boolean(isFirebaseEnabled && db));
 
+  // Admin Authentication State
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   // Theme State: user preference persisted to localStorage, fallback to system preference or dark
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('datedash_admin_theme');
@@ -233,8 +246,159 @@ function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const [users, setUsers] = useState([]);
-  const [reports, setReports] = useState([]);
+  // Helper to check if a user record or claims signify an admin
+  const verifyAdminStatus = async (user) => {
+    if (!user) return false;
+
+    // 1. Check custom user claims / token claims
+    try {
+      const idTokenResult = await user.getIdTokenResult(true);
+      if (idTokenResult.claims.admin || idTokenResult.claims.role === 'admin') {
+        return true;
+      }
+    } catch (e) {
+      console.warn('Error checking token claims:', e);
+    }
+
+    // 2. Check Firestore "users" or "admins" collection doc
+    if (db) {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const uData = userSnap.data();
+          const role = (uData.role || uData.accountType || uData.userType || uData.type || '').toLowerCase();
+          if (role === 'admin' || role === 'administrator' || uData.isAdmin === true) {
+            return true;
+          }
+        }
+
+        // Also check an optional separate "admins" collection
+        const adminDocRef = doc(db, 'admins', user.uid);
+        const adminSnap = await getDoc(adminDocRef);
+        if (adminSnap.exists()) {
+          return true;
+        }
+      } catch (e) {
+        console.warn('Error checking Firestore admin record:', e);
+      }
+    }
+
+    // 3. Fallback: check if email is verified admin or contains admin domain / known admin email
+    const email = (user.email || '').toLowerCase();
+    if (email.startsWith('admin') || email.includes('admin@') || email.endsWith('@datedash.com')) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Firebase Auth listener
+  useEffect(() => {
+    if (!isFirebaseEnabled || !auth) {
+      // Offline/Demo mode: check if local admin session exists
+      const savedOfflineAdmin = localStorage.getItem('datedash_admin_session');
+      if (savedOfflineAdmin) {
+        try {
+          setCurrentUser(JSON.parse(savedOfflineAdmin));
+        } catch {
+          setCurrentUser(null);
+        }
+      }
+      setAuthLoading(false);
+      return undefined;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const isAdmin = await verifyAdminStatus(user);
+        if (isAdmin) {
+          setCurrentUser({
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || user.email?.split('@')[0] || 'Admin',
+            avatar: user.photoURL || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&h=80&fit=crop',
+            role: 'Administrator'
+          });
+          setLoginError('');
+        } else {
+          await signOut(auth);
+          setCurrentUser(null);
+          setLoginError('Access denied: Your account is not registered as an Administrator.');
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [isFirebaseEnabled]);
+
+  // Login handler
+  const handleLogin = async (email, password) => {
+    setLoginError('');
+    setIsLoggingIn(true);
+
+    if (!isFirebaseEnabled || !auth) {
+      // Offline / Demo authentication
+      setTimeout(() => {
+        if (email.toLowerCase().includes('admin') || password === 'admin123') {
+          const demoAdmin = {
+            uid: 'demo-admin-01',
+            email: email,
+            name: 'Sarah Jenkins (Demo)',
+            avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&h=80&fit=crop',
+            role: 'Lead Administrator'
+          };
+          setCurrentUser(demoAdmin);
+          localStorage.setItem('datedash_admin_session', JSON.stringify(demoAdmin));
+        } else {
+          setLoginError('Invalid demo credentials. Use admin@datedash.com / admin123.');
+        }
+        setIsLoggingIn(false);
+      }, 500);
+      return;
+    }
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const isAdmin = await verifyAdminStatus(userCredential.user);
+      if (!isAdmin) {
+        await signOut(auth);
+        setCurrentUser(null);
+        setLoginError('Access denied: This account does not have Admin account privileges.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setLoginError('Invalid email or password. Please verify your admin credentials.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setLoginError('Too many unsuccessful attempts. Please try again later.');
+      } else {
+        setLoginError(err.message || 'Authentication failed.');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    if (isFirebaseEnabled && auth) {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    }
+    localStorage.removeItem('datedash_admin_session');
+    setCurrentUser(null);
+    setLoginError('');
+  };
+
+  const [users, setUsers] = useState(isFirebaseEnabled ? [] : initialUsers);
+  const [reports, setReports] = useState(isFirebaseEnabled ? [] : initialReports);
   const [bookings, setBookings] = useState([]);
   const [streams, setStreams] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -247,6 +411,7 @@ function App() {
   );
 
   const [selectedUser, setSelectedUser] = useState(null);
+  const [settingsSubTab, setSettingsSubTab] = useState('appearance');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
@@ -256,10 +421,14 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isFirebaseEnabled || !db) {
+    if (!currentUser || !isFirebaseEnabled || !db) {
+      if (!isFirebaseEnabled) {
+        setLoading(false);
+      }
       return undefined;
     }
 
+    setLoading(true);
     let remainingInitialLoads = 7;
     const markLoaded = () => {
       remainingInitialLoads -= 1;
@@ -580,6 +749,27 @@ function App() {
     }
   ];
 
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', gap: '16px' }}>
+        <div style={{ width: '44px', height: '44px', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500 }}>Checking administrator authentication...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLogin={handleLogin}
+        error={loginError}
+        loading={isLoggingIn}
+        isLive={isLive}
+      />
+    );
+  }
+
   return (
     <div className={`app-container ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <Sidebar
@@ -588,12 +778,19 @@ function App() {
           setActiveTab(tab);
           setMobileMenuOpen(false);
         }}
+        activeSettingsSubTab={settingsSubTab}
+        setActiveSettingsSubTab={(sub) => {
+          setSettingsSubTab(sub);
+          setMobileMenuOpen(false);
+        }}
         pendingVerificationsCount={pendingVerificationsCount}
         pendingReportsCount={pendingReportsCount}
         activeStreamsCount={activeStreams.length}
         bookingsCount={bookings.length}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
+        currentAdmin={currentUser}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -605,6 +802,7 @@ function App() {
           setMobileMenuOpen={setMobileMenuOpen}
           theme={theme}
           toggleTheme={toggleTheme}
+          onLogout={handleLogout}
         />
 
         <section className="content-body">
@@ -679,6 +877,8 @@ function App() {
                   handleSaveSettings={handleSaveSettings}
                   theme={theme}
                   setTheme={setTheme}
+                  activeSubTab={settingsSubTab}
+                  setActiveSubTab={setSettingsSubTab}
                 />
               )}
             </>

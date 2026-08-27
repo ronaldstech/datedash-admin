@@ -26,8 +26,22 @@ import { initialSettings } from '../data/dashboardData';
  * - handleSaveSettings: function to save settings to Firestore/context
  * - theme: 'dark' | 'light'
  * - setTheme: function to change theme
+ * - activeSubTab: string (controlled from sidebar or tabs)
+ * - setActiveSubTab: function to change sub-tab
  */
-export default function SettingsTab({ settings, setSettings, handleSaveSettings, theme = 'dark', setTheme }) {
+export default function SettingsTab({
+  settings,
+  setSettings,
+  handleSaveSettings,
+  theme = 'dark',
+  setTheme,
+  activeSubTab: controlledSubTab,
+  setActiveSubTab: setControlledSubTab
+}) {
+  const [internalSubTab, setInternalSubTab] = useState('appearance');
+  const activeSubTab = controlledSubTab !== undefined ? controlledSubTab : internalSubTab;
+  const setActiveSubTab = setControlledSubTab || setInternalSubTab;
+
   const [newCountry, setNewCountry] = useState('');
   const [newLanguage, setNewLanguage] = useState('');
   const [countrySearch, setCountrySearch] = useState('');
@@ -106,448 +120,489 @@ export default function SettingsTab({ settings, setSettings, handleSaveSettings,
     setTimeout(() => setSavedNotice(false), 3000);
   };
 
+  const subTabs = [
+    { id: 'appearance', label: 'Theme & Appearance', icon: Palette },
+    { id: 'localization', label: 'Countries & Languages', icon: Globe },
+    { id: 'algorithm', label: 'Matching Algorithm', icon: Sliders },
+    { id: 'monetization', label: 'Pricing & Limits', icon: CreditCard },
+    { id: 'safety', label: 'Safety & Moderation', icon: ShieldCheck }
+  ];
+
   return (
     <div className="settings-container">
-      {/* Theme Selection Section */}
-      <div className="settings-section">
-        <div className="settings-section-header flex-between">
-          <div>
-            <div className="section-title-with-icon">
-              <Palette size={20} className="title-icon icon-rose" />
-              <h3 className="settings-section-title">Admin Interface Theme</h3>
-            </div>
-            <p className="settings-section-desc">
-              Choose your preferred visual theme mode for the administrative dashboard.
-            </p>
-          </div>
-        </div>
+      {/* Sub Tabs Navigation */}
+      <nav className="settings-nav-tabs" aria-label="Settings categories">
+        {subTabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className={`settings-tab-btn ${activeSubTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveSubTab(tab.id)}
+            >
+              <Icon size={16} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
-          <button
-            type="button"
-            onClick={() => setTheme && setTheme('dark')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '16px 20px',
-              borderRadius: '12px',
-              border: theme === 'dark' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-              background: theme === 'dark' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              boxShadow: theme === 'dark' ? '0 0 16px var(--primary-glow)' : 'none',
-              transition: 'all 0.2s ease',
-              textAlign: 'left'
-            }}
-          >
-            <div
+      {/* Sub-Tab 1: Appearance & Theme */}
+      {activeSubTab === 'appearance' && (
+        <div className="settings-section">
+          <div className="settings-section-header flex-between">
+            <div>
+              <div className="section-title-with-icon">
+                <Palette size={20} className="title-icon icon-rose" />
+                <h3 className="settings-section-title">Admin Interface Theme</h3>
+              </div>
+              <p className="settings-section-desc">
+                Choose your preferred visual theme mode for the administrative dashboard.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setTheme && setTheme('dark')}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                background: '#09070f',
-                color: '#f3f4f6',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid #27203d'
+                gap: '14px',
+                padding: '18px 20px',
+                borderRadius: '12px',
+                border: theme === 'dark' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                background: theme === 'dark' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                boxShadow: theme === 'dark' ? '0 0 16px var(--primary-glow)' : 'none',
+                transition: 'all 0.2s ease',
+                textAlign: 'left'
               }}
             >
-              <Moon size={18} color="#8b5cf6" />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>Dark Theme</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Deep dark aesthetic</div>
-            </div>
-          </button>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: '#09070f',
+                  color: '#f3f4f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #27203d',
+                  flexShrink: 0
+                }}
+              >
+                <Moon size={20} color="#8b5cf6" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '14.5px' }}>Dark Theme</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Deep dark aesthetic</div>
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setTheme && setTheme('light')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '16px 20px',
-              borderRadius: '12px',
-              border: theme === 'light' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-              background: theme === 'light' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              boxShadow: theme === 'light' ? '0 0 16px var(--primary-glow)' : 'none',
-              transition: 'all 0.2s ease',
-              textAlign: 'left'
-            }}
-          >
-            <div
+            <button
+              type="button"
+              onClick={() => setTheme && setTheme('light')}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                background: '#ffffff',
-                color: '#0f172a',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid #e2e8f0'
+                gap: '14px',
+                padding: '18px 20px',
+                borderRadius: '12px',
+                border: theme === 'light' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                background: theme === 'light' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                boxShadow: theme === 'light' ? '0 0 16px var(--primary-glow)' : 'none',
+                transition: 'all 0.2s ease',
+                textAlign: 'left'
               }}
             >
-              <Sun size={18} color="#f59e0b" />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>Light Theme</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Clean, crisp layout</div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Top Banner Notice */}
-      <div className="settings-sync-banner">
-        <div className="sync-banner-info">
-          <Sparkles size={20} className="sync-banner-icon" />
-          <div>
-            <h4>Live App Synchronization</h4>
-            <p>
-              Changes to countries and languages directly populate the Flutter app live video chat filters
-              (stored in <code>app_settings/video_chat</code> in Firestore).
-            </p>
-          </div>
-        </div>
-        {savedNotice && (
-          <div className="saved-badge-pop">
-            <CheckCircle2 size={16} /> Synced to Firebase!
-          </div>
-        )}
-      </div>
-
-      {/* 1. Countries Management Section */}
-      <div className="settings-section">
-        <div className="settings-section-header flex-between">
-          <div>
-            <div className="section-title-with-icon">
-              <Globe size={20} className="title-icon icon-rose" />
-              <h3 className="settings-section-title">Global Matchmaking Countries</h3>
-              <span className="count-pill">{countries.length} Active</span>
-            </div>
-            <p className="settings-section-desc">
-              Manage allowed partner countries for live video matching and user profile locations.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="btn-icon-subtle"
-            onClick={handleResetCountries}
-            title="Reset to Default Countries"
-          >
-            <RotateCcw size={15} /> Reset
-          </button>
-        </div>
-
-        {/* Add Country Form & Search Bar */}
-        <div className="management-controls-grid">
-          <form onSubmit={handleAddCountry} className="add-item-bar">
-            <input
-              type="text"
-              className="form-input add-item-input"
-              placeholder="Add new country (e.g., Zambia, Norway)..."
-              value={newCountry}
-              onChange={(e) => setNewCountry(e.target.value)}
-            />
-            <button type="submit" className="btn-add-item">
-              <Plus size={16} /> Add Country
-            </button>
-          </form>
-
-          <div className="search-filter-box">
-            <Search size={16} className="search-filter-icon" />
-            <input
-              type="text"
-              className="search-filter-input"
-              placeholder="Filter countries below..."
-              value={countrySearch}
-              onChange={(e) => setCountrySearch(e.target.value)}
-            />
-            {countrySearch && (
-              <button
-                type="button"
-                className="clear-search-btn"
-                onClick={() => setCountrySearch('')}
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #e2e8f0',
+                  flexShrink: 0
+                }}
               >
-                <X size={14} />
-              </button>
+                <Sun size={20} color="#f59e0b" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '14.5px' }}>Light Theme</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Clean, crisp layout</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Tab 2: Localization & Matchmaking Regions */}
+      {activeSubTab === 'localization' && (
+        <>
+          {/* Top Banner Notice */}
+          <div className="settings-sync-banner">
+            <div className="sync-banner-info">
+              <Sparkles size={20} className="sync-banner-icon" />
+              <div>
+                <h4>Live App Synchronization</h4>
+                <p>
+                  Changes to countries and languages directly populate the Flutter app live video chat filters
+                  (stored in <code>app_settings/video_chat</code> in Firestore).
+                </p>
+              </div>
+            </div>
+            {savedNotice && (
+              <div className="saved-badge-pop">
+                <CheckCircle2 size={16} /> Synced to Firebase!
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Chips Container */}
-        <div className="chips-wrapper">
-          {filteredCountries.length === 0 ? (
-            <div className="empty-chips-notice">
-              No countries match "{countrySearch}". Type above to add it!
-            </div>
-          ) : (
-            filteredCountries.map((country) => (
-              <div key={country} className="item-chip country-chip">
-                <Globe size={13} className="chip-icon" />
-                <span className="chip-label">{country}</span>
-                <button
-                  type="button"
-                  className="chip-remove-btn"
-                  onClick={() => handleRemoveCountry(country)}
-                  title={`Remove ${country}`}
-                >
-                  <X size={13} />
-                </button>
+          {/* 1. Countries Management Section */}
+          <div className="settings-section">
+            <div className="settings-section-header flex-between">
+              <div>
+                <div className="section-title-with-icon">
+                  <Globe size={20} className="title-icon icon-rose" />
+                  <h3 className="settings-section-title">Global Matchmaking Countries</h3>
+                  <span className="count-pill">{countries.length} Active</span>
+                </div>
+                <p className="settings-section-desc">
+                  Manage allowed partner countries for live video matching and user profile locations.
+                </p>
               </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* 2. Languages Management Section */}
-      <div className="settings-section">
-        <div className="settings-section-header flex-between">
-          <div>
-            <div className="section-title-with-icon">
-              <Languages size={20} className="title-icon icon-purple" />
-              <h3 className="settings-section-title">Supported Partner Languages</h3>
-              <span className="count-pill purple-pill">{languages.length} Active</span>
-            </div>
-            <p className="settings-section-desc">
-              Manage languages available for live stream preferences and profile settings.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="btn-icon-subtle"
-            onClick={handleResetLanguages}
-            title="Reset to Default Languages"
-          >
-            <RotateCcw size={15} /> Reset
-          </button>
-        </div>
-
-        {/* Add Language Form & Search Bar */}
-        <div className="management-controls-grid">
-          <form onSubmit={handleAddLanguage} className="add-item-bar">
-            <input
-              type="text"
-              className="form-input add-item-input"
-              placeholder="Add new language (e.g., Swahili, Arabic, German)..."
-              value={newLanguage}
-              onChange={(e) => setNewLanguage(e.target.value)}
-            />
-            <button type="submit" className="btn-add-item purple-btn">
-              <Plus size={16} /> Add Language
-            </button>
-          </form>
-
-          <div className="search-filter-box">
-            <Search size={16} className="search-filter-icon" />
-            <input
-              type="text"
-              className="search-filter-input"
-              placeholder="Filter languages below..."
-              value={languageSearch}
-              onChange={(e) => setLanguageSearch(e.target.value)}
-            />
-            {languageSearch && (
               <button
                 type="button"
-                className="clear-search-btn"
-                onClick={() => setLanguageSearch('')}
+                className="btn-icon-subtle"
+                onClick={handleResetCountries}
+                title="Reset to Default Countries"
               >
-                <X size={14} />
+                <RotateCcw size={15} /> Reset
               </button>
-            )}
-          </div>
-        </div>
-
-        {/* Chips Container */}
-        <div className="chips-wrapper">
-          {filteredLanguages.length === 0 ? (
-            <div className="empty-chips-notice">
-              No languages match "{languageSearch}". Type above to add it!
             </div>
-          ) : (
-            filteredLanguages.map((language) => (
-              <div key={language} className="item-chip language-chip">
-                <Languages size={13} className="chip-icon" />
-                <span className="chip-label">{language}</span>
-                <button
-                  type="button"
-                  className="chip-remove-btn"
-                  onClick={() => handleRemoveLanguage(language)}
-                  title={`Remove ${language}`}
-                >
-                  <X size={13} />
+
+            {/* Add Country Form & Search Bar */}
+            <div className="management-controls-grid">
+              <form onSubmit={handleAddCountry} className="add-item-bar">
+                <input
+                  type="text"
+                  className="form-input add-item-input"
+                  placeholder="Add new country (e.g., Zambia, Norway)..."
+                  value={newCountry}
+                  onChange={(e) => setNewCountry(e.target.value)}
+                />
+                <button type="submit" className="btn-add-item">
+                  <Plus size={16} /> Add Country
                 </button>
+              </form>
+
+              <div className="search-filter-box">
+                <Search size={16} className="search-filter-icon" />
+                <input
+                  type="text"
+                  className="search-filter-input"
+                  placeholder="Filter countries below..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                />
+                {countrySearch && (
+                  <button
+                    type="button"
+                    className="clear-search-btn"
+                    onClick={() => setCountrySearch('')}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            </div>
 
-      {/* 3. Matching Algorithm Weighting */}
-      <div className="settings-section">
-        <div className="settings-section-header">
-          <div className="section-title-with-icon">
-            <Sliders size={20} className="title-icon icon-rose" />
-            <h3 className="settings-section-title">Matching Algorithm Weighting</h3>
+            {/* Chips Container */}
+            <div className="chips-wrapper">
+              {filteredCountries.length === 0 ? (
+                <div className="empty-chips-notice">
+                  No countries match "{countrySearch}". Type above to add it!
+                </div>
+              ) : (
+                filteredCountries.map((country) => (
+                  <div key={country} className="item-chip country-chip">
+                    <Globe size={13} className="chip-icon" />
+                    <span className="chip-label">{country}</span>
+                    <button
+                      type="button"
+                      className="chip-remove-btn"
+                      onClick={() => handleRemoveCountry(country)}
+                      title={`Remove ${country}`}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-          <p className="settings-section-desc">
-            Adjust how critical different filters are when recommending matches to users.
-          </p>
-        </div>
 
-        <div className="form-group">
-          <label className="form-label">
-            <span>Location Proximity Weight</span>
-            <span className="form-label-value">{settings.matchAlgorithmWeightLocation}%</span>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            className="form-range"
-            value={settings.matchAlgorithmWeightLocation}
-            onChange={(e) => {
-              const val = parseInt(e.target.value);
-              const remainder = 100 - val;
-              setSettings((prev) => ({
-                ...prev,
-                matchAlgorithmWeightLocation: val,
-                matchAlgorithmWeightBio: Math.round(remainder * 0.45),
-                matchAlgorithmWeightInterests: Math.round(remainder * 0.55)
-              }));
-            }}
-          />
-        </div>
+          {/* 2. Languages Management Section */}
+          <div className="settings-section">
+            <div className="settings-section-header flex-between">
+              <div>
+                <div className="section-title-with-icon">
+                  <Languages size={20} className="title-icon icon-purple" />
+                  <h3 className="settings-section-title">Supported Partner Languages</h3>
+                  <span className="count-pill purple-pill">{languages.length} Active</span>
+                </div>
+                <p className="settings-section-desc">
+                  Manage languages available for live stream preferences and profile settings.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-icon-subtle"
+                onClick={handleResetLanguages}
+                title="Reset to Default Languages"
+              >
+                <RotateCcw size={15} /> Reset
+              </button>
+            </div>
 
-        <div className="form-group">
-          <label className="form-label">
-            <span>Shared Interests Weight</span>
-            <span className="form-label-value">{settings.matchAlgorithmWeightInterests}%</span>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            className="form-range"
-            value={settings.matchAlgorithmWeightInterests}
-            onChange={(e) => {
-              const val = parseInt(e.target.value);
-              const remainder = 100 - val;
-              setSettings((prev) => ({
-                ...prev,
-                matchAlgorithmWeightInterests: val,
-                matchAlgorithmWeightLocation: Math.round(remainder * 0.6),
-                matchAlgorithmWeightBio: Math.round(remainder * 0.4)
-              }));
-            }}
-          />
-        </div>
+            {/* Add Language Form & Search Bar */}
+            <div className="management-controls-grid">
+              <form onSubmit={handleAddLanguage} className="add-item-bar">
+                <input
+                  type="text"
+                  className="form-input add-item-input"
+                  placeholder="Add new language (e.g., Swahili, Arabic, German)..."
+                  value={newLanguage}
+                  onChange={(e) => setNewLanguage(e.target.value)}
+                />
+                <button type="submit" className="btn-add-item purple-btn">
+                  <Plus size={16} /> Add Language
+                </button>
+              </form>
 
-        <div className="form-group">
-          <label className="form-label">
-            <span>Bio Similarity & Keywords Weight</span>
-            <span className="form-label-value">{settings.matchAlgorithmWeightBio}%</span>
-          </label>
-          <input
-            type="range"
-            className="form-range"
-            disabled
-            value={settings.matchAlgorithmWeightBio}
-          />
-        </div>
-      </div>
+              <div className="search-filter-box">
+                <Search size={16} className="search-filter-icon" />
+                <input
+                  type="text"
+                  className="search-filter-input"
+                  placeholder="Filter languages below..."
+                  value={languageSearch}
+                  onChange={(e) => setLanguageSearch(e.target.value)}
+                />
+                {languageSearch && (
+                  <button
+                    type="button"
+                    className="clear-search-btn"
+                    onClick={() => setLanguageSearch('')}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
 
-      {/* 4. Subscription & Swipe Controls */}
-      <div className="settings-section">
-        <div className="settings-section-header">
-          <div className="section-title-with-icon">
-            <CreditCard size={20} className="title-icon icon-purple" />
-            <h3 className="settings-section-title">Subscription & Swipe Controls</h3>
+            {/* Chips Container */}
+            <div className="chips-wrapper">
+              {filteredLanguages.length === 0 ? (
+                <div className="empty-chips-notice">
+                  No languages match "{languageSearch}". Type above to add it!
+                </div>
+              ) : (
+                filteredLanguages.map((language) => (
+                  <div key={language} className="item-chip language-chip">
+                    <Languages size={13} className="chip-icon" />
+                    <span className="chip-label">{language}</span>
+                    <button
+                      type="button"
+                      className="chip-remove-btn"
+                      onClick={() => handleRemoveLanguage(language)}
+                      title={`Remove ${language}`}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-          <p className="settings-section-desc">
-            Set limits for free tier accounts and adjust subscription pricing models.
-          </p>
-        </div>
+        </>
+      )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <div className="form-group">
-            <label className="form-label">Daily Swipe Limit (Free Tier)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={settings.swipeLimitFree}
-              onChange={(e) =>
-                setSettings((prev) => ({ ...prev, swipeLimitFree: parseInt(e.target.value) || 0 }))
-              }
-            />
+      {/* Sub-Tab 3: Matching Algorithm */}
+      {activeSubTab === 'algorithm' && (
+        <div className="settings-section">
+          <div className="settings-section-header">
+            <div className="section-title-with-icon">
+              <Sliders size={20} className="title-icon icon-rose" />
+              <h3 className="settings-section-title">Matching Algorithm Weighting</h3>
+            </div>
+            <p className="settings-section-desc">
+              Adjust how critical different filters are when recommending matches to users.
+            </p>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Premium Membership Monthly Price ($)</label>
+            <label className="form-label">
+              <span>Location Proximity Weight</span>
+              <span className="form-label-value">{settings.matchAlgorithmWeightLocation}%</span>
+            </label>
             <input
-              type="number"
-              step="0.01"
-              className="form-input"
-              value={settings.premiumPriceMonthly}
-              onChange={(e) =>
+              type="range"
+              min="0"
+              max="100"
+              className="form-range"
+              value={settings.matchAlgorithmWeightLocation}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                const remainder = 100 - val;
                 setSettings((prev) => ({
                   ...prev,
-                  premiumPriceMonthly: parseFloat(e.target.value) || 0
-                }))
-              }
+                  matchAlgorithmWeightLocation: val,
+                  matchAlgorithmWeightBio: Math.round(remainder * 0.45),
+                  matchAlgorithmWeightInterests: Math.round(remainder * 0.55)
+                }));
+              }}
             />
           </div>
-        </div>
-      </div>
 
-      {/* 5. Safety & Spam Regulations */}
-      <div className="settings-section">
-        <div className="settings-section-header">
-          <div className="section-title-with-icon">
-            <ShieldCheck size={20} className="title-icon icon-rose" />
-            <h3 className="settings-section-title">Safety & Spam Regulations</h3>
-          </div>
-          <p className="settings-section-desc">
-            Global safety rules for profiles matching and automated bans.
-          </p>
-        </div>
-
-        <div className="form-group" style={{ marginBottom: '20px' }}>
-          <label className="form-checkbox-label">
+          <div className="form-group">
+            <label className="form-label">
+              <span>Shared Interests Weight</span>
+              <span className="form-label-value">{settings.matchAlgorithmWeightInterests}%</span>
+            </label>
             <input
-              type="checkbox"
-              className="form-checkbox"
-              checked={settings.enableShadowBans}
-              onChange={(e) =>
-                setSettings((prev) => ({ ...prev, enableShadowBans: e.target.checked }))
-              }
+              type="range"
+              min="0"
+              max="100"
+              className="form-range"
+              value={settings.matchAlgorithmWeightInterests}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                const remainder = 100 - val;
+                setSettings((prev) => ({
+                  ...prev,
+                  matchAlgorithmWeightInterests: val,
+                  matchAlgorithmWeightLocation: Math.round(remainder * 0.6),
+                  matchAlgorithmWeightBio: Math.round(remainder * 0.4)
+                }));
+              }}
             />
-            <span>Enable Shadow-Banning (Spam profiles match only with other spam accounts)</span>
-          </label>
-        </div>
+          </div>
 
-        <div className="form-group">
-          <label className="form-label">Flag Moderation Level</label>
-          <select
-            className="form-input"
-            value={settings.moderationStrictness}
-            onChange={(e) =>
-              setSettings((prev) => ({ ...prev, moderationStrictness: e.target.value }))
-            }
-          >
-            <option value="relaxed">Relaxed (Reported accounts warned after 5 reports)</option>
-            <option value="moderate">Moderate (Warned after 3 reports, shadow-ban checked)</option>
-            <option value="strict">Strict (Immediate profile hidden on 2 flags pending review)</option>
-          </select>
+          <div className="form-group">
+            <label className="form-label">
+              <span>Bio Similarity & Keywords Weight</span>
+              <span className="form-label-value">{settings.matchAlgorithmWeightBio}%</span>
+            </label>
+            <input
+              type="range"
+              className="form-range"
+              disabled
+              value={settings.matchAlgorithmWeightBio}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Sub-Tab 4: Monetization, Limits & Pricing */}
+      {activeSubTab === 'monetization' && (
+        <div className="settings-section">
+          <div className="settings-section-header">
+            <div className="section-title-with-icon">
+              <CreditCard size={20} className="title-icon icon-purple" />
+              <h3 className="settings-section-title">Subscription & Swipe Controls</h3>
+            </div>
+            <p className="settings-section-desc">
+              Set limits for free tier accounts and adjust subscription pricing models.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="form-group">
+              <label className="form-label">Daily Swipe Limit (Free Tier)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={settings.swipeLimitFree}
+                onChange={(e) =>
+                  setSettings((prev) => ({ ...prev, swipeLimitFree: parseInt(e.target.value) || 0 }))
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Premium Membership Monthly Price ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-input"
+                value={settings.premiumPriceMonthly}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    premiumPriceMonthly: parseFloat(e.target.value) || 0
+                  }))
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Tab 5: Safety & Spam Regulations */}
+      {activeSubTab === 'safety' && (
+        <div className="settings-section">
+          <div className="settings-section-header">
+            <div className="section-title-with-icon">
+              <ShieldCheck size={20} className="title-icon icon-rose" />
+              <h3 className="settings-section-title">Safety & Spam Regulations</h3>
+            </div>
+            <p className="settings-section-desc">
+              Global safety rules for profiles matching and automated bans.
+            </p>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <label className="form-checkbox-label">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                checked={settings.enableShadowBans}
+                onChange={(e) =>
+                  setSettings((prev) => ({ ...prev, enableShadowBans: e.target.checked }))
+                }
+              />
+              <span>Enable Shadow-Banning (Spam profiles match only with other spam accounts)</span>
+            </label>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Flag Moderation Level</label>
+            <select
+              className="form-input"
+              value={settings.moderationStrictness}
+              onChange={(e) =>
+                setSettings((prev) => ({ ...prev, moderationStrictness: e.target.value }))
+              }
+            >
+              <option value="relaxed">Relaxed (Reported accounts warned after 5 reports)</option>
+              <option value="moderate">Moderate (Warned after 3 reports, shadow-ban checked)</option>
+              <option value="strict">Strict (Immediate profile hidden on 2 flags pending review)</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Floating Save Actions Bar */}
       <div className="settings-save-actions">

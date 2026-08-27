@@ -1,4 +1,4 @@
-import { Search, Menu, Sun, Moon } from 'lucide-react';
+import { Search, Menu, Sun, Moon, LogOut } from 'lucide-react';
 
 /**
  * Header component.
@@ -10,6 +10,7 @@ import { Search, Menu, Sun, Moon } from 'lucide-react';
  * - setMobileMenuOpen: function to open mobile menu sidebar drawer
  * - theme: 'dark' | 'light'
  * - toggleTheme: function to toggle theme
+ * - onLogout: function to sign out
  */
 export default function Header({
   activeTab,
@@ -18,7 +19,8 @@ export default function Header({
   setSearchQuery,
   setMobileMenuOpen,
   theme = 'dark',
-  toggleTheme
+  toggleTheme,
+  onLogout
 }) {
   return (
     <header className="header">
@@ -101,6 +103,19 @@ export default function Header({
             </>
           )}
         </button>
+
+        {onLogout && (
+          <button
+            type="button"
+            className="logout-btn-header"
+            onClick={onLogout}
+            title="Sign out from Admin Dashboard"
+            aria-label="Sign out"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        )}
       </div>
     </header>
   );
