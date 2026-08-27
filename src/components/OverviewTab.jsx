@@ -65,7 +65,16 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, conn
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
                 <XAxis dataKey="day" stroke="var(--text-secondary)" />
                 <YAxis stroke="var(--text-secondary)" />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'white' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
                 <Area type="monotone" dataKey="active" stroke="var(--secondary)" fillOpacity={1} fill="url(#activeGrad)" name="Active Sessions" />
                 <Area type="monotone" dataKey="matches" stroke="var(--primary)" fillOpacity={1} fill="url(#matchGrad)" name="Matches Made" />
               </AreaChart>
@@ -83,7 +92,16 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, conn
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
                 <XAxis dataKey="month" stroke="var(--text-secondary)" />
                 <YAxis stroke="var(--text-secondary)" />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'white' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
                 <Legend />
                 <Bar dataKey="free" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Free Users" />
                 <Bar dataKey="premium" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Premium Tier" />
@@ -112,7 +130,16 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, conn
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

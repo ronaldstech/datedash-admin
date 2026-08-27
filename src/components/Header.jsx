@@ -1,4 +1,4 @@
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, Sun, Moon } from 'lucide-react';
 
 /**
  * Header component.
@@ -8,8 +8,18 @@ import { Search, Menu } from 'lucide-react';
  * - searchQuery: string for search inputs
  * - setSearchQuery: function to update search query
  * - setMobileMenuOpen: function to open mobile menu sidebar drawer
+ * - theme: 'dark' | 'light'
+ * - toggleTheme: function to toggle theme
  */
-export default function Header({ activeTab, isLive, searchQuery, setSearchQuery, setMobileMenuOpen }) {
+export default function Header({
+  activeTab,
+  isLive,
+  searchQuery,
+  setSearchQuery,
+  setMobileMenuOpen,
+  theme = 'dark',
+  toggleTheme
+}) {
   return (
     <header className="header">
       <button 
@@ -71,6 +81,26 @@ export default function Header({ activeTab, isLive, searchQuery, setSearchQuery,
             />
           </div>
         )}
+
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun size={17} />
+              <span>Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon size={17} />
+              <span>Dark Mode</span>
+            </>
+          )}
+        </button>
       </div>
     </header>
   );

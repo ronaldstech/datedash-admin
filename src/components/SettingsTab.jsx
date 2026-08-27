@@ -11,7 +11,10 @@ import {
   CheckCircle2,
   Sliders,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  Sun,
+  Moon,
+  Palette
 } from 'lucide-react';
 import { initialSettings } from '../data/dashboardData';
 
@@ -21,8 +24,10 @@ import { initialSettings } from '../data/dashboardData';
  * - settings: object containing global configurations
  * - setSettings: function to update settings state
  * - handleSaveSettings: function to save settings to Firestore/context
+ * - theme: 'dark' | 'light'
+ * - setTheme: function to change theme
  */
-export default function SettingsTab({ settings, setSettings, handleSaveSettings }) {
+export default function SettingsTab({ settings, setSettings, handleSaveSettings, theme = 'dark', setTheme }) {
   const [newCountry, setNewCountry] = useState('');
   const [newLanguage, setNewLanguage] = useState('');
   const [countrySearch, setCountrySearch] = useState('');
@@ -103,6 +108,101 @@ export default function SettingsTab({ settings, setSettings, handleSaveSettings 
 
   return (
     <div className="settings-container">
+      {/* Theme Selection Section */}
+      <div className="settings-section">
+        <div className="settings-section-header flex-between">
+          <div>
+            <div className="section-title-with-icon">
+              <Palette size={20} className="title-icon icon-rose" />
+              <h3 className="settings-section-title">Admin Interface Theme</h3>
+            </div>
+            <p className="settings-section-desc">
+              Choose your preferred visual theme mode for the administrative dashboard.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
+          <button
+            type="button"
+            onClick={() => setTheme && setTheme('dark')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              border: theme === 'dark' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+              background: theme === 'dark' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              boxShadow: theme === 'dark' ? '0 0 16px var(--primary-glow)' : 'none',
+              transition: 'all 0.2s ease',
+              textAlign: 'left'
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: '#09070f',
+                color: '#f3f4f6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #27203d'
+              }}
+            >
+              <Moon size={18} color="#8b5cf6" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>Dark Theme</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Deep dark aesthetic</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme && setTheme('light')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              border: theme === 'light' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+              background: theme === 'light' ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              boxShadow: theme === 'light' ? '0 0 16px var(--primary-glow)' : 'none',
+              transition: 'all 0.2s ease',
+              textAlign: 'left'
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              <Sun size={18} color="#f59e0b" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>Light Theme</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Clean, crisp layout</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Top Banner Notice */}
       <div className="settings-sync-banner">
         <div className="sync-banner-info">

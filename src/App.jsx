@@ -212,6 +212,27 @@ function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLive] = useState(Boolean(isFirebaseEnabled && db));
 
+  // Theme State: user preference persisted to localStorage, fallback to system preference or dark
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('datedash_admin_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('datedash_admin_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -582,6 +603,8 @@ function App() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           setMobileMenuOpen={setMobileMenuOpen}
+          theme={theme}
+          toggleTheme={toggleTheme}
         />
 
         <section className="content-body">
@@ -654,6 +677,8 @@ function App() {
                   settings={settings}
                   setSettings={setSettings}
                   handleSaveSettings={handleSaveSettings}
+                  theme={theme}
+                  setTheme={setTheme}
                 />
               )}
             </>
