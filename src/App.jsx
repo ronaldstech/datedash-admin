@@ -502,7 +502,7 @@ function App() {
       unsubscribeSettings();
       unsubscribeAppSettings();
     };
-  }, []);
+  }, [currentUser]);
 
   const stats = useMemo(() => buildTrendStats(users, transactions), [users, transactions]);
 
