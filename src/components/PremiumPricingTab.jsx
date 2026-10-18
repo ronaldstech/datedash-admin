@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { CreditCard, Save, Sparkles } from 'lucide-react';
+import { CreditCard, Save, Sparkles, Zap, Heart, Crown, Plus, Trash2, Flame } from 'lucide-react';
 import '../styles/premium-pricing.css';
 
 const planNames = ['pro', 'premium', 'elite'];
@@ -59,6 +59,12 @@ export default function PremiumPricingTab({ config, onSave, isLive }) {
     creditBundles: previous.creditBundles.filter((_, bundleIndex) => bundleIndex !== index)
   }));
 
+  const planDetails = {
+    pro: { title: 'Pro', description: 'A little more room to connect.', icon: Zap },
+    premium: { title: 'Premium', description: 'More ways to find your person.', icon: Heart },
+    elite: { title: 'Elite', description: 'The complete DateDash experience.', icon: Crown }
+  };
+
   const save = async () => {
     const invalidPlan = Object.values(draft.plans).some((plan) =>
       ['weekly', 'monthly'].some((period) => plan[period] === '' || !Number.isFinite(Number(plan[period])) || Number(plan[period]) < 0)
@@ -102,21 +108,21 @@ export default function PremiumPricingTab({ config, onSave, isLive }) {
     <section className="premium-pricing-page">
       <header className="premium-pricing-hero">
         <div className="premium-pricing-icon"><CreditCard size={24} /></div>
-        <div><span className="premium-pricing-kicker">SUBSCRIPTIONS & SPARKS</span><h2>Premium pricing</h2><p>Prices are loaded from the app pricing record and shared across countries.</p></div>
+        <div className="premium-pricing-hero-copy"><span className="premium-pricing-kicker">COMMERCE SETTINGS</span><h2>Premium pricing</h2><p>Set the shared USD prices for subscriptions and Spark bundles.</p><span className="premium-base-currency"><span className="currency-live-dot" /> BASE CURRENCY <strong>USD · $</strong></span></div>
         <button className="premium-pricing-save" type="button" disabled={saving} onClick={save}><Save size={16} />{saving ? 'Saving…' : 'Save pricing'}</button>
       </header>
       {message && <div className="premium-pricing-message" role="status">{message}</div>}
       {!config && <div className="premium-pricing-message" role="status">No pricing record exists in the database yet. Enter prices and save to create it.</div>}
       <section className="premium-pricing-section">
-        <div className="premium-section-heading"><div><h3>Subscription prices</h3><p>All prices are in USD and shared across countries.</p></div><span>USD $</span></div>
+        <div className="premium-section-heading"><div><span className="premium-section-eyebrow">01 / MEMBERSHIPS</span><h3>Subscription plans</h3><p>One base price per billing cycle. The app converts prices to local currencies.</p></div><span className="pricing-section-count">3 PLANS</span></div>
         <div className="premium-plan-pricing-grid">
-          {Object.entries(draft.plans).map(([plan, prices]) => <article className="premium-plan-card" key={plan}><span className={`plan-${plan}`}>{plan}</span><div className="premium-plan-inputs">{['weekly', 'monthly'].map((period) => <label key={period}>{period}<div className="usd-input"><span>$</span><input aria-label={`${plan} ${period} price in USD`} type="number" min="0" step="0.01" value={prices[period]} onChange={(event) => updatePlan(plan, period, event.target.value)} /></div></label>)}</div></article>)}
+          {Object.entries(draft.plans).map(([plan, prices]) => { const details = planDetails[plan]; const PlanIcon = details.icon; return <article className={`premium-plan-card plan-card-${plan}`} key={plan}><div className="plan-card-top"><div className="plan-card-icon"><PlanIcon size={18} /></div><span className={`plan-${plan}`}>{details.title}</span><span className="plan-card-tier">TIER</span></div><p className="plan-card-description">{details.description}</p><div className="premium-plan-inputs">{['weekly', 'monthly'].map((period) => <label key={period}><span>{period} billing</span><div className="usd-input"><span>$</span><input aria-label={`${plan} ${period} price in USD`} type="number" min="0" step="0.01" value={prices[period]} onChange={(event) => updatePlan(plan, period, event.target.value)} /></div></label>)}</div></article>; })}
         </div>
       </section>
       <section className="premium-pricing-section">
-        <div className="premium-section-heading"><div><h3><Sparkles size={17} /> Spark bundles</h3><p>Bundle amounts, bonuses, and USD prices are loaded from the app pricing record.</p></div><span>{draft.creditBundles.length} bundles</span></div>
-        <div className="spark-bundle-grid">{draft.creditBundles.map((bundle, index) => <article className="spark-bundle-card" key={`${bundle.amount}-${index}`}><strong>{Number(bundle.amount || 0).toLocaleString()} Sparks</strong><label>Bundle amount<input type="number" min="1" step="1" value={bundle.amount} onChange={(event) => updateBundle(index, 'amount', event.target.value)} /></label><label>Price in USD<div className="usd-input"><span>$</span><input type="number" min="0" step="0.01" value={bundle.priceUsd} onChange={(event) => updateBundle(index, 'priceUsd', event.target.value)} /></div></label><label>Bonus Sparks<input type="number" min="0" step="1" value={bundle.bonus} onChange={(event) => updateBundle(index, 'bonus', event.target.value)} /></label><label className="spark-popular-toggle"><input type="checkbox" checked={Boolean(bundle.popular)} onChange={(event) => updateBundle(index, 'popular', event.target.checked)} /> Mark as popular</label><button type="button" onClick={() => removeBundle(index)}>Remove bundle</button></article>)}</div>
-        <button type="button" onClick={addBundle}>Add Spark bundle</button>
+        <div className="premium-section-heading"><div><span className="premium-section-eyebrow">02 / VIRTUAL CURRENCY</span><h3>Spark bundles</h3><p>Customize package size, USD price, and any bonus Sparks.</p></div><span className="pricing-section-count">{draft.creditBundles.length} BUNDLES</span></div>
+        {draft.creditBundles.length > 0 ? <div className="spark-bundle-grid">{draft.creditBundles.map((bundle, index) => <article className="spark-bundle-card" key={index}><div className="bundle-card-top"><div className="bundle-spark-icon"><Sparkles size={18} /></div><div className="bundle-title"><strong>{Number(bundle.amount || 0).toLocaleString()} <span>Sparks</span></strong><small>Bundle {String(index + 1).padStart(2, '0')}</small></div>{bundle.popular && <span className="bundle-popular"><Flame size={12} /> Popular</span>}</div><label>Bundle amount<input aria-label={`Bundle ${index + 1} Spark amount`} type="number" min="1" step="1" value={bundle.amount} onChange={(event) => updateBundle(index, 'amount', event.target.value)} /></label><label>Price in USD<div className="usd-input"><span>$</span><input aria-label={`Bundle ${index + 1} USD price`} type="number" min="0" step="0.01" value={bundle.priceUsd} onChange={(event) => updateBundle(index, 'priceUsd', event.target.value)} /></div></label><div className="bundle-footer"><label>Bonus Sparks<input aria-label={`Bundle ${index + 1} bonus Sparks`} type="number" min="0" step="1" value={bundle.bonus} onChange={(event) => updateBundle(index, 'bonus', event.target.value)} /></label><label className="spark-popular-toggle"><input type="checkbox" checked={Boolean(bundle.popular)} onChange={(event) => updateBundle(index, 'popular', event.target.checked)} /> Popular</label></div><button className="bundle-remove" type="button" onClick={() => removeBundle(index)}><Trash2 size={14} /> Remove bundle</button></article>)}</div> : <div className="spark-bundle-empty"><Sparkles size={22} /><strong>No Spark bundles yet</strong><span>Add a bundle to offer Sparks for purchase.</span></div>}
+        <button className="bundle-add-button" type="button" onClick={addBundle}><Plus size={16} /> Add Spark bundle</button>
       </section>
       {!isLive && <p className="premium-pricing-offline">Firebase is not connected. Saves in this preview stay in the current session.</p>}
     </section>
