@@ -29,9 +29,9 @@ export default function LoginScreen({ onLogin, error, loading, isLive }) {
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo-badge">
-              <img src={logo} alt="DateDash Logo" className="login-logo-img" />
+              <img src={logo} alt="Snellum Logo" className="login-logo-img" />
             </div>
-            <h1 className="login-title">DateDash Admin Portal</h1>
+            <h1 className="login-title">Snellum Admin Portal</h1>
             <p className="login-subtitle">
               Sign in with your verified administrator credentials to access dashboard telemetry and management tools.
             </p>

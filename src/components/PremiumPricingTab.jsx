@@ -62,7 +62,7 @@ export default function PremiumPricingTab({ config, onSave, isLive }) {
   const planDetails = {
     pro: { title: 'Pro', description: 'A little more room to connect.', icon: Zap },
     premium: { title: 'Premium', description: 'More ways to find your person.', icon: Heart },
-    elite: { title: 'Elite', description: 'The complete DateDash experience.', icon: Crown }
+    elite: { title: 'Elite', description: 'The complete Snellum experience.', icon: Crown }
   };
 
   const save = async () => {

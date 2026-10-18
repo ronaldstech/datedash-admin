@@ -13,7 +13,6 @@ import {
   LogOut,
   ChevronDown,
   Palette,
-  Globe,
   Sliders,
   CreditCard,
   ShieldCheck
@@ -46,9 +45,7 @@ export default function Sidebar({
 
   const settingsSubMenuItems = [
     { id: 'appearance', label: 'Theme & Style',          icon: Palette },
-    { id: 'localization', label: 'Countries & Languages', icon: Globe },
-    { id: 'algorithm', label: 'Match Algorithm',          icon: Sliders },
-    { id: 'monetization', label: 'Pricing & Limits',      icon: CreditCard },
+    { id: 'algorithm', label: 'Matching & Discovery', icon: Sliders },
     { id: 'safety', label: 'Safety & Moderation',         icon: ShieldCheck }
   ];
 

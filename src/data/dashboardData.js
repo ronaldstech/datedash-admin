@@ -176,46 +176,10 @@ export const initialReports = [
 export const initialSettings = {
   swipeLimitFree: 50,
   minAgeLimit: 18,
-  premiumPriceMonthly: 9.99,
   matchAlgorithmWeightBio: 25,
   matchAlgorithmWeightLocation: 45,
   matchAlgorithmWeightInterests: 30,
   enableShadowBans: true,
-  moderationStrictness: "moderate", // relaxed, moderate, strict
-  countries: [
-    'Malawi',
-    'United States',
-    'Kenya',
-    'Tanzania',
-    'United Kingdom',
-    'Spain',
-    'France',
-    'Germany',
-    'Brazil',
-    'Canada',
-    'Australia',
-    'India',
-    'Japan',
-    'Italy',
-    'Mexico',
-    'South Africa',
-    'Nigeria',
-    'South Korea',
-    'China'
-  ],
-  languages: [
-    'English',
-    'Kiswahili',
-    'Chichewa',
-    'Spanish',
-    'French',
-    'German',
-    'Portuguese',
-    'Hindi',
-    'Japanese',
-    'Korean',
-    'Chinese',
-    'Italian'
-  ]
+  moderationStrictness: "moderate" // relaxed, moderate, strict
 };
 

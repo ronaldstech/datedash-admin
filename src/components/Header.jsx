@@ -1,125 +1,47 @@
-import { Search, Menu, Sun, Moon, LogOut } from 'lucide-react';
+import { Search, Menu, Sun, Moon, LogOut, Cloud, CloudOff, X } from 'lucide-react';
 
-/**
- * Header component.
- * Props:
- * - activeTab: string identifier of current active tab
- * - isLive: boolean indicating if live Firebase is connected
- * - searchQuery: string for search inputs
- * - setSearchQuery: function to update search query
- * - setMobileMenuOpen: function to open mobile menu sidebar drawer
- * - theme: 'dark' | 'light'
- * - toggleTheme: function to toggle theme
- * - onLogout: function to sign out
- */
-export default function Header({
-  activeTab,
-  isLive,
-  searchQuery,
-  setSearchQuery,
-  setMobileMenuOpen,
-  theme = 'dark',
-  toggleTheme,
-  onLogout
-}) {
+const pageDetails = {
+  overview: ['Dashboard Overview', 'A live snapshot of your Snellum community'],
+  users: ['User Management', 'Search profiles and manage account access'],
+  verifications: ['Verification Requests', 'Review profile identity submissions'],
+  reports: ['Moderation & Reports', 'Review reports and keep the community safe'],
+  exploreCategories: ['Explore Categories', 'Manage the interests users browse'],
+  bookings: ['Meetups', 'Review one-to-one meetup requests'],
+  events: ['Events & Applicants', 'Manage events and attendee applications'],
+  transactions: ['Financial Transactions', 'Review payments, subscriptions, and credits'],
+  gifts: ['Virtual Gifts Store', 'Manage gift values and presentation'],
+  premiumPricing: ['Premium Pricing', 'Manage shared USD plans and Spark bundles'],
+  settings: ['App Configuration', 'Manage discovery, moderation, and appearance']
+};
+
+export default function Header({ activeTab, isLive, searchQuery, setSearchQuery, setMobileMenuOpen, theme = 'dark', toggleTheme, onLogout }) {
+  const [title, description] = pageDetails[activeTab] || pageDetails.overview;
+
   return (
-    <header className="header">
-      <button 
-        className="mobile-menu-toggle"
-        onClick={() => setMobileMenuOpen(true)}
-        aria-label="Open navigation menu"
-      >
-        <Menu size={20} />
+    <header className="header admin-header">
+      <button type="button" className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation menu">
+        <Menu size={19} />
       </button>
-      <div className="page-title">
-        <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {activeTab === 'overview' && 'Dashboard Overview'}
-          {activeTab === 'users' && 'User Management'}
-          {activeTab === 'verifications' && 'Verification Requests'}
-          {activeTab === 'reports' && 'Moderation & Reports'}
-          {activeTab === 'exploreCategories' && 'Explore Categories'}
-          {activeTab === 'bookings' && 'Meetups'}
-          {activeTab === 'events' && 'Events & Applicants'}
-          {activeTab === 'transactions' && 'Financial Transactions'}
-          {activeTab === 'gifts' && 'Virtual Gifts Store'}
-          {activeTab === 'premiumPricing' && 'Premium Pricing'}
-          {activeTab === 'settings' && 'System Settings'}
-          
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '4px 8px',
-              borderRadius: '99px',
-              backgroundColor: isLive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-              color: isLive ? 'var(--success)' : 'var(--warning)',
-              border: isLive ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
-              letterSpacing: '0.5px'
-            }}
-          >
-            {isLive ? 'LIVE FIREBASE' : 'FIREBASE NOT CONFIGURED'}
+
+      <div className="page-title admin-page-title">
+        <span className="admin-header-context">SNELLUM <span>/</span> ADMIN</span>
+        <div className="admin-title-row">
+          <h1>{title}</h1>
+          <span className={`connection-status ${isLive ? 'connected' : 'offline'}`} title={isLive ? 'Connected to Firebase' : 'Firebase is not configured'}>
+            {isLive ? <Cloud size={13} /> : <CloudOff size={13} />}
+            <span>{isLive ? 'Live' : 'Preview'}</span>
           </span>
-        </h1>
-        <p>
-          {activeTab === 'overview' && 'Real-time performance metrics and charts'}
-          {activeTab === 'users' && 'Search, filter, edit status and access profiles'}
-          {activeTab === 'verifications' && 'Compare profile avatars with user uploaded selfie verifications'}
-          {activeTab === 'reports' && 'Handle reported users and suspicious activity'}
-          {activeTab === 'exploreCategories' && 'Manage the categories people browse on Explore'}
-          {activeTab === 'bookings' && 'Review meetup schedules and manage booking requests'}
-          {activeTab === 'events' && 'Curate community meetups and review event applications'}
-          {activeTab === 'transactions' && 'View PayChangu, TNM Mpamba, and Airtel Money subscription and token logs'}
-          {activeTab === 'gifts' && 'Edit virtual item configurations and coin inventory values'}
-          {activeTab === 'premiumPricing' && 'Manage subscription rates and Spark bundles by country'}
-          {activeTab === 'settings' && 'Fine-tune matching algorithms, prices and controls'}
-        </p>
+        </div>
+        <p>{description}</p>
       </div>
 
-      <div className="header-actions">
-        {activeTab === 'users' && (
-          <div className="search-bar">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search user, email, city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        )}
-
-        <button
-          type="button"
-          className="theme-toggle-btn"
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-        >
-          {theme === 'dark' ? (
-            <>
-              <Sun size={17} />
-              <span>Light Mode</span>
-            </>
-          ) : (
-            <>
-              <Moon size={17} />
-              <span>Dark Mode</span>
-            </>
-          )}
+      <div className="header-actions admin-header-actions">
+        {activeTab === 'users' && <label className="search-bar admin-header-search"><Search size={16} className="search-icon" /><input type="search" aria-label="Search users" placeholder="Search users…" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />{searchQuery && <button type="button" className="search-clear" aria-label="Clear search" onClick={() => setSearchQuery('')}><X size={14} /></button>}</label>}
+        <span className="header-actions-divider" aria-hidden="true" />
+        <button type="button" className="theme-toggle-btn admin-header-action" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}>
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
-
-        {onLogout && (
-          <button
-            type="button"
-            className="logout-btn-header"
-            onClick={onLogout}
-            title="Sign out from Admin Dashboard"
-            aria-label="Sign out"
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
-        )}
+        {onLogout && <button type="button" className="logout-btn-header admin-header-action" onClick={onLogout} title="Sign out" aria-label="Sign out"><LogOut size={15} /><span>Sign out</span></button>}
       </div>
     </header>
   );

@@ -488,23 +488,6 @@ function App() {
       }
     );
 
-    const unsubscribeAppSettings = onSnapshot(
-      doc(db, 'app_settings', 'video_chat'),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setSettings((prev) => ({
-            ...prev,
-            countries: data.countries && data.countries.length > 0 ? data.countries : prev.countries || initialSettings.countries,
-            languages: data.languages && data.languages.length > 0 ? data.languages : prev.languages || initialSettings.languages
-          }));
-        }
-      },
-      (error) => {
-        console.warn('Firestore app_settings listener error:', error);
-      }
-    );
-
     return () => {
       unsubscribeUsers();
       unsubscribeReports();
@@ -517,7 +500,6 @@ function App() {
       unsubscribeEventApplications();
       unsubscribeExploreCategories();
       unsubscribeSettings();
-      unsubscribeAppSettings();
     };
   }, [currentUser]);
 
@@ -696,31 +678,21 @@ function App() {
   };
 
   const handleSaveSettings = async (customSettings) => {
-    const targetSettings = customSettings || settings;
+    const targetSettings = { ...(customSettings || settings) };
+    delete targetSettings.countries;
+    delete targetSettings.languages;
+    delete targetSettings.premiumPriceMonthly;
 
     if (!isLive || !db) {
-      alert('Local preview mode: Settings updated locally. Connect Firebase to sync remotely.');
       return;
     }
 
     try {
       await setDoc(doc(db, 'settings', 'global'), targetSettings, { merge: true });
-
-      // Synchronize with Flutter app video_chat config in app_settings/video_chat
-      await setDoc(
-        doc(db, 'app_settings', 'video_chat'),
-        {
-          countries: targetSettings.countries || [],
-          languages: targetSettings.languages || [],
-          updatedAt: new Date()
-        },
-        { merge: true }
-      );
-
-      alert('Global configurations and Video Chat (Countries & Languages) successfully synced with Firebase!');
+      alert('App configuration saved successfully.');
     } catch (err) {
       console.error('Firestore settings save error:', err);
-      alert(`Error syncing with Firebase: ${err.message}`);
+      throw err;
     }
   };
 
@@ -945,6 +917,7 @@ function App() {
                   settings={settings}
                   setSettings={setSettings}
                   handleSaveSettings={handleSaveSettings}
+                  isLive={isLive}
                   theme={theme}
                   setTheme={setTheme}
                   activeSubTab={settingsSubTab}
