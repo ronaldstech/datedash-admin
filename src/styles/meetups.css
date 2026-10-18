@@ -1,0 +1,62 @@
+.meetups-workspace { --meetup-gold: #f5b94c; display: grid; gap: 17px; }
+.meetups-welcome { display: flex; align-items: center; gap: 13px; padding: 17px 20px; border: 1px solid var(--border-color); border-radius: 13px; background: linear-gradient(105deg, var(--bg-secondary), color-mix(in srgb, var(--bg-secondary) 89%, var(--primary))); box-shadow: var(--card-shadow); }
+.meetups-welcome-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(245,185,76,.25); border-radius: 12px; color: var(--meetup-gold); background: rgba(245,185,76,.1); }
+.meetups-kicker { color: var(--meetup-gold); font-size: 9px; font-weight: 800; letter-spacing: 1.15px; }
+.meetups-welcome h2 { margin-top: 2px; color: var(--text-primary); font: 600 19px var(--font-display); }
+.meetups-welcome p { margin-top: 2px; color: var(--text-secondary); font-size: 10.5px; }
+.meetups-total { display: grid; justify-items: end; margin-left: auto; padding-left: 18px; border-left: 1px solid var(--border-color); }
+.meetups-total strong { color: var(--text-primary); font: 600 23px var(--font-display); }
+.meetups-total span { color: var(--text-muted); font-size: 9px; }
+.meetups-stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+.meetups-stats > div { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; padding: 13px 16px; border: 1px solid var(--border-color); border-radius: 11px; background: var(--bg-secondary); }
+.meetups-stats span { color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .9px; }
+.meetups-stats strong { grid-column: 2; grid-row: 1 / span 2; color: var(--text-primary); font: 600 23px var(--font-display); }
+.meetups-stats small { color: var(--text-secondary); font-size: 9px; }
+.meetup-stat-pending strong { color: var(--warning); }
+.meetup-stat-accepted strong { color: var(--success); }
+.meetups-list-section { display: grid; gap: 11px; }
+.meetups-list-heading { display: flex; align-items: end; justify-content: space-between; }
+.meetups-list-heading h3 { margin-top: 3px; color: var(--text-primary); font: 600 18px var(--font-display); }
+.meetups-list-heading > span { color: var(--text-muted); font-size: 10px; }
+.meetups-filter-tabs { display: flex; align-items: center; gap: 5px; width: fit-content; max-width: 100%; overflow-x: auto; padding: 4px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); scrollbar-width: thin; }
+.meetups-filter-tabs button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 7px; color: var(--text-secondary); background: transparent; font: 600 9px var(--font-sans); cursor: pointer; white-space: nowrap; transition: .15s; }
+.meetups-filter-tabs button:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.meetups-filter-tabs button.active { color: var(--text-primary); border-color: rgba(245,185,76,.25); background: linear-gradient(110deg, rgba(244,63,94,.1), rgba(245,185,76,.09)); }
+.meetups-filter-tabs button.active svg { color: var(--meetup-gold); }
+.meetups-filter-tabs button > span { display: inline-grid; min-width: 18px; height: 17px; padding: 0 4px; place-items: center; border-radius: 99px; color: var(--text-muted); background: var(--bg-tertiary); font-size: 8px; }
+.meetups-list { display: grid; gap: 8px; }
+.meetup-card { display: grid; grid-template-columns: 49px minmax(0,1fr) minmax(135px, .27fr); align-items: center; gap: 14px; padding: 13px 15px; border: 1px solid var(--border-color); border-radius: 11px; background: var(--bg-secondary); box-shadow: 0 3px 12px rgba(0,0,0,.07); transition: border-color .16s, transform .16s; }
+.meetup-card:hover { border-color: rgba(245,185,76,.38); transform: translateY(-1px); }
+.meetup-date-tile { display: grid; align-content: center; justify-items: center; width: 45px; height: 49px; border: 1px solid rgba(245,185,76,.25); border-radius: 9px; color: var(--text-primary); background: linear-gradient(145deg, rgba(245,185,76,.14), rgba(244,63,94,.08)); }
+.meetup-date-tile strong { font: 600 19px var(--font-display); line-height: 1; }
+.meetup-date-tile span { margin-top: 3px; color: var(--meetup-gold); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.meetup-main { min-width: 0; }
+.meetup-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.meetup-card-label { color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+.meetup-card-top h4 { overflow: hidden; margin-top: 2px; color: var(--text-primary); font: 600 13px var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+.meetup-card-top h4 span { color: var(--text-muted); font: 400 10px var(--font-sans); }
+.meetup-status { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 99px; color: var(--text-secondary); background: var(--bg-tertiary); font-size: 8px; font-weight: 700; text-transform: capitalize; }
+.meetup-status i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.meetup-status-pending { color: var(--warning); border-color: rgba(245,158,11,.23); background: rgba(245,158,11,.07); }
+.meetup-status-accepted { color: var(--success); border-color: rgba(16,185,129,.23); background: rgba(16,185,129,.07); }
+.meetup-status-rejected, .meetup-status-cancelled { color: var(--text-muted); }
+.meetup-details { display: flex; flex-wrap: wrap; gap: 7px 13px; margin-top: 8px; }
+.meetup-details span { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 9px; }
+.meetup-details svg { flex: 0 0 auto; color: var(--primary); }
+.meetup-note { display: flex; align-items: flex-start; gap: 6px; max-width: 760px; margin-top: 7px; color: var(--text-muted); }
+.meetup-note svg { flex: 0 0 auto; margin-top: 1px; }
+.meetup-note p { overflow: hidden; font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.meetup-card-actions { display: grid; justify-items: end; gap: 8px; padding-left: 12px; border-left: 1px solid var(--border-color); }
+.meetup-participants { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.meetup-participants svg { color: var(--text-muted); }
+.meetup-participants > span { display: grid; overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.meetup-participants small { margin-top: 1px; color: var(--text-muted); font-size: 8px; }
+.meetup-card-actions button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid rgba(239,68,68,.2); border-radius: 7px; color: var(--danger); background: rgba(239,68,68,.07); font: 600 9px var(--font-sans); cursor: pointer; transition: .15s; }
+.meetup-card-actions button:hover { border-color: var(--danger); background: rgba(239,68,68,.12); }
+.meetups-empty { display: grid; justify-items: center; padding: 42px 18px; border: 1px dashed var(--border-color); border-radius: 12px; text-align: center; background: var(--bg-secondary); }
+.meetups-empty > div { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: var(--meetup-gold); background: rgba(245,185,76,.1); }
+.meetups-empty h4 { margin-top: 12px; color: var(--text-primary); font: 600 15px var(--font-display); }
+.meetups-empty p { margin: 4px 0 12px; color: var(--text-secondary); font-size: 10px; }
+.meetups-empty button { padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 7px; color: var(--text-primary); background: var(--bg-tertiary); font-size: 9px; cursor: pointer; }
+@media (max-width: 900px) { .meetup-card { grid-template-columns: 46px minmax(0,1fr); gap: 11px; } .meetup-card-actions { grid-column: 2; display: flex; align-items: center; justify-content: space-between; padding: 8px 0 0; border-top: 1px solid var(--border-color); border-left: 0; } }
+@media (max-width: 600px) { .meetups-welcome { padding: 13px; } .meetups-stats { gap: 6px; } .meetups-stats > div { padding: 10px; } .meetups-stats span { font-size: 7px; } .meetups-filter-tabs { width: 100%; } .meetups-filter-tabs button { flex: 1; justify-content: center; padding-inline: 7px; } .meetup-card { padding: 11px; } .meetup-card-top { align-items: flex-start; flex-direction: column; } .meetup-details { gap: 6px 9px; } .meetup-details span { font-size: 8px; } }

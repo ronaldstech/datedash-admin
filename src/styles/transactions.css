@@ -1,0 +1,65 @@
+.transactions-workspace { --transaction-gold: #f5b94c; display: grid; gap: 16px; min-width: 0; }
+.transactions-hero { display: flex; align-items: center; gap: 13px; padding: 17px 20px; border: 1px solid var(--border-color); border-radius: 13px; background: linear-gradient(105deg, var(--bg-secondary), color-mix(in srgb, var(--bg-secondary) 89%, var(--primary))); box-shadow: var(--card-shadow); }
+.transactions-hero-mark { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(245,185,76,.25); border-radius: 12px; color: var(--transaction-gold); background: rgba(245,185,76,.1); }
+.transactions-kicker { color: var(--transaction-gold); font-size: 9px; font-weight: 800; letter-spacing: 1.15px; }
+.transactions-hero h2 { margin-top: 2px; color: var(--text-primary); font: 600 19px var(--font-display); }
+.transactions-hero p { margin-top: 2px; color: var(--text-secondary); font-size: 10.5px; }
+.transactions-hero-count { display: grid; justify-items: end; margin-left: auto; padding-left: 18px; border-left: 1px solid var(--border-color); }
+.transactions-hero-count strong { color: var(--text-primary); font: 600 23px var(--font-display); }
+.transactions-hero-count span { color: var(--text-muted); font-size: 9px; }
+.transactions-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.transactions-metrics > div { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; padding: 13px 16px; overflow: hidden; border: 1px solid var(--border-color); border-radius: 11px; background: var(--bg-secondary); }
+.transactions-metrics > div > span { color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .9px; }
+.transactions-metrics > div > strong { grid-column: 1; color: var(--text-primary); font: 600 21px var(--font-display); }
+.transactions-metrics > div > small { color: var(--text-secondary); font-size: 9px; }
+.transactions-metrics > div > svg { grid-column: 2; grid-row: 1 / span 3; color: var(--transaction-gold); opacity: .75; }
+.transactions-metrics > div:first-child > strong { color: var(--success); }
+.transactions-metrics > div:last-child > strong { color: var(--warning); }
+.transactions-panel { overflow: hidden; border: 1px solid var(--border-color); border-radius: 13px; background: var(--bg-secondary); box-shadow: var(--card-shadow); }
+.transactions-panel-heading { display: flex; align-items: end; justify-content: space-between; padding: 16px 19px 12px; }
+.transactions-panel-heading h3 { margin-top: 3px; color: var(--text-primary); font: 600 17px var(--font-display); }
+.transactions-panel-heading > span { color: var(--text-muted); font-size: 10px; }
+.transactions-toolbar { display: flex; align-items: center; gap: 8px; padding: 0 15px 13px; }
+.transactions-search { display: flex; align-items: center; gap: 8px; min-width: 180px; flex: 1; padding: 0 10px; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted); background: var(--bg-tertiary); }
+.transactions-search:focus-within { border-color: var(--transaction-gold); }
+.transactions-search input { width: 100%; height: 34px; border: 0; outline: 0; color: var(--text-primary); background: transparent; font-size: 10px; }
+.transactions-search input::placeholder { color: var(--text-muted); }
+.transactions-toolbar select { min-height: 36px; padding: 0 10px; border: 1px solid var(--border-color); border-radius: 8px; outline: 0; color: var(--text-primary); background: var(--bg-tertiary); font-size: 10px; cursor: pointer; }
+.transactions-toolbar select:focus { border-color: var(--transaction-gold); }
+.transactions-table-scroll { overflow-x: auto; }
+.transactions-table { min-width: 860px; }
+.transactions-table th { padding: 11px 13px; font-size: 8px; letter-spacing: .75px; }
+.transactions-table td { padding: 11px 13px; }
+.transaction-reference, .transaction-user { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.transaction-reference > span { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(245,185,76,.2); border-radius: 8px; color: var(--transaction-gold); background: rgba(245,185,76,.08); }
+.transaction-reference > div, .transaction-user > div { display: grid; min-width: 0; gap: 3px; }
+.transaction-reference strong { max-width: 140px; overflow: hidden; color: var(--text-primary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-reference small { color: var(--text-muted); font-size: 8px; text-transform: capitalize; }
+.transaction-user img, .transaction-user-initial { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border: 1px solid var(--border-color); border-radius: 50%; object-fit: cover; }
+.transaction-user-initial { color: var(--transaction-gold); background: rgba(245,185,76,.08); font: 600 11px var(--font-display); }
+.transaction-user strong { max-width: 140px; overflow: hidden; color: var(--text-primary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-user small { max-width: 130px; overflow: hidden; color: var(--text-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-amount { color: var(--text-primary); font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.transaction-amount.positive { color: var(--success); }
+.transaction-product { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 9px; white-space: nowrap; }
+.transaction-product svg { color: var(--primary); }
+.transaction-operator { display: inline-block; max-width: 130px; overflow: hidden; color: var(--text-secondary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-date, .transaction-time { display: block; color: var(--text-secondary); font-size: 9px; white-space: nowrap; }
+.transaction-time { margin-top: 2px; color: var(--text-muted); font-size: 8px; }
+.transaction-status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 99px; color: var(--text-muted); background: var(--bg-tertiary); font-size: 8px; font-weight: 700; text-transform: capitalize; white-space: nowrap; }
+.transaction-status i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.transaction-status-success, .transaction-status-successful, .transaction-status-completed, .transaction-status-paid { color: var(--success); border-color: rgba(16,185,129,.24); background: rgba(16,185,129,.07); }
+.transaction-status-pending { color: var(--warning); border-color: rgba(245,158,11,.24); background: rgba(245,158,11,.07); }
+.transaction-status-failed, .transaction-status-cancelled { color: var(--danger); border-color: rgba(239,68,68,.2); background: rgba(239,68,68,.06); }
+.transactions-empty { display: grid; justify-items: center; padding: 42px 18px; text-align: center; }
+.transactions-empty > div { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; color: var(--transaction-gold); background: rgba(245,185,76,.1); }
+.transactions-empty h4 { margin-top: 11px; color: var(--text-primary); font: 600 15px var(--font-display); }
+.transactions-empty p { margin-top: 4px; color: var(--text-secondary); font-size: 10px; }
+.transactions-empty button { margin-top: 12px; padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 7px; color: var(--text-primary); background: var(--bg-tertiary); font-size: 9px; cursor: pointer; }
+.transactions-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 9px; }
+.transactions-pagination strong { color: var(--text-primary); }
+.transactions-pagination > div { display: flex; align-items: center; gap: 9px; }
+.transactions-pagination button { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border-color); border-radius: 7px; color: var(--text-primary); background: var(--bg-tertiary); cursor: pointer; }
+.transactions-pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.transactions-pagination button:hover:not(:disabled) { border-color: var(--transaction-gold); color: var(--transaction-gold); }
+@media (max-width: 700px) { .transactions-hero { padding: 13px; } .transactions-metrics { grid-template-columns: 1fr; gap: 7px; } .transactions-metrics > div { padding: 10px 13px; } .transactions-panel-heading { padding: 13px 13px 10px; } .transactions-toolbar { flex-wrap: wrap; padding: 0 11px 10px; } .transactions-search { flex-basis: 100%; } .transactions-toolbar select { flex: 1; } .transactions-pagination { align-items: flex-start; flex-direction: column; } .transactions-pagination > div { align-self: flex-end; } }

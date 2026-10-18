@@ -37,10 +37,12 @@ export default function Header({
           {activeTab === 'users' && 'User Management'}
           {activeTab === 'verifications' && 'Verification Requests'}
           {activeTab === 'reports' && 'Moderation & Reports'}
-          {activeTab === 'streams' && 'Live Streams'}
-          {activeTab === 'bookings' && 'Date Bookings'}
+          {activeTab === 'exploreCategories' && 'Explore Categories'}
+          {activeTab === 'bookings' && 'Meetups'}
+          {activeTab === 'events' && 'Events & Applicants'}
           {activeTab === 'transactions' && 'Financial Transactions'}
           {activeTab === 'gifts' && 'Virtual Gifts Store'}
+          {activeTab === 'premiumPricing' && 'Premium Pricing'}
           {activeTab === 'settings' && 'System Settings'}
           
           <span
@@ -63,10 +65,12 @@ export default function Header({
           {activeTab === 'users' && 'Search, filter, edit status and access profiles'}
           {activeTab === 'verifications' && 'Compare profile avatars with user uploaded selfie verifications'}
           {activeTab === 'reports' && 'Handle reported users and suspicious activity'}
-          {activeTab === 'streams' && 'Manage broadcaster channels and force-stop active streams'}
-          {activeTab === 'bookings' && 'Audit date bookings schedule and force cancellation of disputes'}
+          {activeTab === 'exploreCategories' && 'Manage the categories people browse on Explore'}
+          {activeTab === 'bookings' && 'Review meetup schedules and manage booking requests'}
+          {activeTab === 'events' && 'Curate community meetups and review event applications'}
           {activeTab === 'transactions' && 'View PayChangu, TNM Mpamba, and Airtel Money subscription and token logs'}
           {activeTab === 'gifts' && 'Edit virtual item configurations and coin inventory values'}
+          {activeTab === 'premiumPricing' && 'Manage subscription rates and Spark bundles by country'}
           {activeTab === 'settings' && 'Fine-tune matching algorithms, prices and controls'}
         </p>
       </div>

@@ -6,14 +6,17 @@ import OverviewTab from './components/OverviewTab';
 import UsersTab from './components/UsersTab';
 import VerificationsTab from './components/VerificationsTab';
 import ReportsTab from './components/ReportsTab';
-import StreamsTab from './components/StreamsTab';
 import BookingsTab from './components/BookingsTab';
+import EventsTab from './components/EventsTab';
 import TransactionsTab from './components/TransactionsTab';
 import GiftsTab from './components/GiftsTab';
+import PremiumPricingTab from './components/PremiumPricingTab';
+import ExploreCategoriesTab from './components/ExploreCategoriesTab';
 import SettingsTab from './components/SettingsTab';
 import UserDetailsModal from './components/UserDetailsModal';
 import LoginScreen from './components/LoginScreen';
 import { initialSettings, initialUsers, initialReports, initialVerifications } from './data/dashboardData';
+import { defaultExploreCategories } from './data/exploreCategoriesData';
 import { db, auth, isFirebaseEnabled } from './firebase';
 import {
   signInWithEmailAndPassword,
@@ -22,6 +25,7 @@ import {
 } from 'firebase/auth';
 import {
   collection,
+  addDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -70,8 +74,8 @@ const calculateAge = (dobField) => {
 };
 
 const getUserName = (data) => {
-  if (data.name || data.displayName || data.fullName) {
-    return data.name || data.displayName || data.fullName;
+  if (data.name || data.displayName || data.fullName || data.username || data.handle) {
+    return data.name || data.displayName || data.fullName || data.username || data.handle;
   }
 
   return [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Unnamed User';
@@ -89,6 +93,7 @@ const mapUser = (docSnap) => {
 
   return {
     id: docSnap.id,
+    authUid: data.uid || data.userId || docSnap.id,
     name: getUserName(data),
     email: data.email || data.phoneNumber || data.phone || 'No contact',
     age: data.age ?? calculateAge(data.dob || data.birthDate || data.dateOfBirth) ?? 'N/A',
@@ -100,6 +105,7 @@ const mapUser = (docSnap) => {
     status: data.status || (data.hideProfile ? 'banned' : 'active'),
     verificationStatus: data.verificationStatus || (data.isVerified ? 'verified' : 'unverified'),
     bio: data.bio || data.about || '',
+    lookingFor: Array.isArray(data.lookingFor) ? data.lookingFor : [],
     reportedCount: data.reportedCount || data.reportsCount || 0,
     nationalIdUrl: data.nationalIdUrl || data.verificationPhoto || data.selfieUrl || null,
     photos: data.photos || data.photoUrls || []
@@ -140,21 +146,6 @@ const mapBooking = (docSnap) => {
     status: data.status || 'pending',
     note: data.note || data.senderNote || '',
     senderNote: data.senderNote || ''
-  };
-};
-
-const mapStream = (docSnap) => {
-  const data = docSnap.data();
-
-  return {
-    id: docSnap.id,
-    broadcasterId: data.broadcasterId || data.hostId || data.userId || '',
-    broadcasterName: data.broadcasterName || data.hostName || data.userName || 'Broadcaster',
-    broadcasterPhoto: data.broadcasterPhoto || data.hostPhoto || data.userPhoto || DEFAULT_AVATAR,
-    viewerCount: Number(data.viewerCount || data.viewers || 0),
-    title: data.title || data.description || 'Live Broadcast',
-    status: data.status || (data.endedAt ? 'ended' : 'active'),
-    startedAt: toIsoString(data.startedAt || data.createdAt || data.timestamp)
   };
 };
 
@@ -400,10 +391,13 @@ function App() {
   const [users, setUsers] = useState(isFirebaseEnabled ? [] : initialUsers);
   const [reports, setReports] = useState(isFirebaseEnabled ? [] : initialReports);
   const [bookings, setBookings] = useState([]);
-  const [streams, setStreams] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [eventApplications, setEventApplications] = useState([]);
+  const [exploreCategories, setExploreCategories] = useState(defaultExploreCategories);
   const [transactions, setTransactions] = useState([]);
   const [matches, setMatches] = useState([]);
   const [gifts, setGifts] = useState([]);
+  const [premiumPricing, setPremiumPricing] = useState(null);
   const [settings, setSettings] = useState(initialSettings);
   const [loading, setLoading] = useState(Boolean(isFirebaseEnabled && db));
   const [connectionError, setConnectionError] = useState(
@@ -453,7 +447,6 @@ function App() {
     const unsubscribeUsers = listenCollection('users', mapUser, setUsers);
     const unsubscribeReports = listenCollection('reports', mapReport, setReports);
     const unsubscribeBookings = listenCollection('meetups', mapBooking, setBookings);
-    const unsubscribeStreams = listenCollection('live_streams', mapStream, setStreams);
     const unsubscribeTransactions = listenCollection('transactions', mapTransaction, setTransactions);
     const unsubscribeMatches = listenCollection(
       'matches',
@@ -461,6 +454,27 @@ function App() {
       setMatches
     );
     const unsubscribeGifts = listenCollection('gifts', mapGift, setGifts);
+    const unsubscribePremiumPricing = onSnapshot(
+      doc(db, 'app_settings', 'premium_pricing'),
+      (docSnap) => setPremiumPricing(docSnap.exists() ? docSnap.data() : null),
+      (error) => {
+        console.warn('Firestore premium pricing listener error:', error);
+        setConnectionError(error.message);
+      }
+    );
+    const unsubscribeEvents = listenCollection('events', (docSnap) => ({ id: docSnap.id, ...docSnap.data() }), setEvents);
+    const unsubscribeEventApplications = listenCollection('eventApplications', (docSnap) => ({ id: docSnap.id, ...docSnap.data() }), setEventApplications);
+    const unsubscribeExploreCategories = onSnapshot(
+      collection(db, 'explore_categories'),
+      (snapshot) => {
+        const configured = new Map(snapshot.docs.map((category) => [category.id, { id: category.id, ...category.data() }]));
+        setExploreCategories(defaultExploreCategories.map((category) => ({ ...category, ...(configured.get(category.key) || {}) })).sort((a, b) => a.order - b.order));
+      },
+      (error) => {
+        console.error('Firestore explore_categories listener error:', error);
+        setConnectionError(error.message);
+      }
+    );
 
     const unsubscribeSettings = onSnapshot(
       doc(db, 'settings', 'global'),
@@ -495,10 +509,13 @@ function App() {
       unsubscribeUsers();
       unsubscribeReports();
       unsubscribeBookings();
-      unsubscribeStreams();
       unsubscribeTransactions();
       unsubscribeMatches();
       unsubscribeGifts();
+      unsubscribePremiumPricing();
+      unsubscribeEvents();
+      unsubscribeEventApplications();
+      unsubscribeExploreCategories();
       unsubscribeSettings();
       unsubscribeAppSettings();
     };
@@ -604,20 +621,6 @@ function App() {
     }
   };
 
-  const handleTerminateStream = async (streamId) => {
-    if (!isLive || !db) return;
-
-    try {
-      await updateDoc(doc(db, 'live_streams', streamId), {
-        status: 'ended',
-        endedAt: new Date()
-      });
-      alert('Broadcast session terminated.');
-    } catch (err) {
-      console.error('Firestore stream termination error:', err);
-    }
-  };
-
   const handleUpdateBookingStatus = async (bookingId, newStatus) => {
     if (!isLive || !db) return;
 
@@ -628,16 +631,68 @@ function App() {
     }
   };
 
-  const handleUpdateGiftCost = async (giftId, newCost) => {
-    setGifts((prev) => prev.map((gift) => (gift.id === giftId ? { ...gift, cost: newCost } : gift)));
-
-    if (!isLive || !db) return;
-
-    try {
-      await updateDoc(doc(db, 'gifts', giftId), { cost: newCost });
-    } catch (err) {
-      console.error('Firestore gift update error:', err);
+  const handleSaveEvent = async (eventData) => {
+    const payload = {
+      ...eventData,
+      date: eventData.date ? new Date(eventData.date).toISOString() : '',
+      capacity: eventData.capacity ? Number(eventData.capacity) : null,
+      updatedAt: new Date().toISOString()
+    };
+    if (isLive && db) {
+      if (eventData.id) await updateDoc(doc(db, 'events', eventData.id), payload);
+      else await addDoc(collection(db, 'events'), { ...payload, createdAt: new Date().toISOString() });
+      return;
     }
+    if (eventData.id) setEvents((previous) => previous.map((event) => event.id === eventData.id ? { ...payload, id: event.id } : event));
+    else setEvents((previous) => [...previous, { ...payload, id: `event-${Date.now()}` }]);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (isLive && db) await deleteDoc(doc(db, 'events', eventId));
+    else setEvents((previous) => previous.filter((event) => event.id !== eventId));
+  };
+
+  const handleEventApplicationStatus = async (applicationId, status) => {
+    if (isLive && db) await updateDoc(doc(db, 'eventApplications', applicationId), { status, reviewedAt: new Date().toISOString() });
+    else setEventApplications((previous) => previous.map((application) => application.id === applicationId ? { ...application, status } : application));
+  };
+
+  const handleSaveExploreCategory = async (category) => {
+    const payload = { ...category, key: category.key, updatedAt: new Date().toISOString() };
+    setExploreCategories((previous) => previous.map((item) => item.key === category.key ? payload : item).sort((a, b) => a.order - b.order));
+    if (isLive && db) await setDoc(doc(db, 'explore_categories', category.key), payload, { merge: true });
+  };
+
+  const handleReorderExploreCategory = async (categoryKey, direction) => {
+    const ordered = [...exploreCategories].sort((a, b) => a.order - b.order);
+    const index = ordered.findIndex((category) => category.key === categoryKey);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ordered.length) return;
+    [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    const updated = ordered.map((category, order) => ({ ...category, order }));
+    setExploreCategories(updated);
+    if (isLive && db) await Promise.all(updated.map((category) => setDoc(doc(db, 'explore_categories', category.key), { order: category.order, updatedAt: new Date().toISOString() }, { merge: true })));
+  };
+
+  const handleSaveGift = async (gift) => {
+    const { id, ...giftData } = gift;
+    const payload = { ...giftData, cost: Number(giftData.cost), updatedAt: new Date().toISOString() };
+    if (isLive && db) {
+      await setDoc(doc(db, 'gifts', id), payload, { merge: true });
+    } else {
+      setGifts((previous) => {
+        const existing = previous.some((item) => item.id === id);
+        return existing
+          ? previous.map((item) => (item.id === id ? { id, ...payload } : item))
+          : [...previous, { id, ...payload }];
+      });
+    }
+  };
+
+  const handleSavePremiumPricing = async (config) => {
+    const payload = { ...config, updatedAt: new Date().toISOString() };
+    if (isLive && db) await setDoc(doc(db, 'app_settings', 'premium_pricing'), payload);
+    else setPremiumPricing(payload);
   };
 
   const handleSaveSettings = async (customSettings) => {
@@ -689,10 +744,6 @@ function App() {
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => bookingStatusFilter === 'all' || booking.status === bookingStatusFilter);
   }, [bookings, bookingStatusFilter]);
-
-  const activeStreams = useMemo(() => {
-    return streams.filter((stream) => stream.status === 'active');
-  }, [streams]);
 
   const userById = useMemo(() => {
     return new Map(users.map((user) => [user.id, user]));
@@ -785,7 +836,6 @@ function App() {
         }}
         pendingVerificationsCount={pendingVerificationsCount}
         pendingReportsCount={pendingReportsCount}
-        activeStreamsCount={activeStreams.length}
         bookingsCount={bookings.length}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
@@ -851,23 +901,43 @@ function App() {
                 <ReportsTab reports={reportsWithUserDetails} handleReportAction={handleReportAction} />
               )}
 
-              {activeTab === 'streams' && (
-                <StreamsTab activeStreams={activeStreams} handleTerminateStream={handleTerminateStream} />
-              )}
-
               {activeTab === 'bookings' && (
                 <BookingsTab
                   bookingStatusFilter={bookingStatusFilter}
                   setBookingStatusFilter={setBookingStatusFilter}
                   filteredBookings={filteredBookings}
+                  bookings={bookings}
                   handleUpdateBookingStatus={handleUpdateBookingStatus}
                 />
               )}
 
-              {activeTab === 'transactions' && <TransactionsTab transactions={transactions} />}
+              {activeTab === 'events' && (
+                <EventsTab
+                  events={events}
+                  applications={eventApplications}
+                  onSaveEvent={handleSaveEvent}
+                  onDeleteEvent={handleDeleteEvent}
+                  onApplicationStatus={handleEventApplicationStatus}
+                />
+              )}
+
+              {activeTab === 'exploreCategories' && (
+                <ExploreCategoriesTab
+                  categories={exploreCategories}
+                  users={users}
+                  onSaveCategory={handleSaveExploreCategory}
+                  onReorderCategory={handleReorderExploreCategory}
+                />
+              )}
+
+              {activeTab === 'transactions' && <TransactionsTab transactions={transactions} users={users} />}
 
               {activeTab === 'gifts' && (
-                <GiftsTab gifts={gifts} handleUpdateGiftCost={handleUpdateGiftCost} />
+                <GiftsTab gifts={gifts} onSaveGift={handleSaveGift} isLive={isLive} />
+              )}
+
+              {activeTab === 'premiumPricing' && (
+                <PremiumPricingTab config={premiumPricing} onSave={handleSavePremiumPricing} isLive={isLive} />
               )}
 
               {activeTab === 'settings' && (

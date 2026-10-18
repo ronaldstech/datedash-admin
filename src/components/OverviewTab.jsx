@@ -164,7 +164,7 @@ export default function OverviewTab({ kpiData, stats, dynamicStats, isLive, conn
                 <div>
                   <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Firestore Data Source</h4>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                    Firestore is connected. The dashboard is reading users, reports, bookings, streams, gifts, transactions, and settings from the live project.
+                    Firestore is connected. The dashboard is reading users, reports, meetups, events, applications, gifts, transactions, and settings from the live project.
                   </p>
                 </div>
               </div>

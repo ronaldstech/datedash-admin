@@ -4,9 +4,10 @@ import {
   Activity,
   CheckCircle,
   ShieldAlert,
-  Radio,
   Settings as SettingsIcon,
   Calendar,
+  PartyPopper,
+  Compass,
   Receipt,
   Gift,
   LogOut,
@@ -24,7 +25,7 @@ import {
  * - activeTab, setActiveTab
  * - activeSettingsSubTab, setActiveSettingsSubTab
  * - pendingVerificationsCount, pendingReportsCount
- * - activeStreamsCount, bookingsCount
+ * - bookingsCount
  * - mobileMenuOpen, setMobileMenuOpen
  * - currentAdmin, onLogout
  */
@@ -35,7 +36,6 @@ export default function Sidebar({
   setActiveSettingsSubTab,
   pendingVerificationsCount,
   pendingReportsCount,
-  activeStreamsCount = 0,
   bookingsCount = 0,
   mobileMenuOpen,
   setMobileMenuOpen,
@@ -133,7 +133,7 @@ export default function Sidebar({
               <NavItem id="users"         label="User Directory"  icon={Users} />
               <NavItem id="verifications" label="Verifications"   icon={CheckCircle} badge={pendingVerificationsCount} badgeVariant="soft" />
               <NavItem id="reports"       label="Abuse Reports"   icon={ShieldAlert}  badge={pendingReportsCount}       badgeVariant="warn" />
-              <NavItem id="streams"       label="Live Streams"    icon={Radio}        badge={activeStreamsCount}         badgeVariant="soft" />
+              <NavItem id="exploreCategories" label="Explore Categories" icon={Compass} />
             </ul>
           </div>
 
@@ -141,9 +141,11 @@ export default function Sidebar({
           <div className="nav-section">
             <span className="nav-section-label">Commerce</span>
             <ul>
-              <NavItem id="bookings"     label="Date Bookings"  icon={Calendar} badge={bookingsCount} badgeVariant="soft" />
+              <NavItem id="bookings"     label="Meetups"  icon={Calendar} badge={bookingsCount} badgeVariant="soft" />
+              <NavItem id="events"       label="Events & Applicants" icon={PartyPopper} />
               <NavItem id="transactions" label="Transactions"   icon={Receipt} />
               <NavItem id="gifts"        label="Virtual Gifts"  icon={Gift} />
+              <NavItem id="premiumPricing" label="Premium Pricing" icon={CreditCard} />
             </ul>
           </div>
 
